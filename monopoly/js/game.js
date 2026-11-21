@@ -493,7 +493,7 @@
                 settleDebtsFor(player);
             }
             renderAll();
-            await new Promise(r => setTimeout(r, 155));
+            await new Promise(r => setTimeout(r, 220));
             player._hopping = false;
         }
         renderAll();
@@ -845,7 +845,7 @@
     }
 
     async function runBotTurn(bot) {
-        await new Promise(r => setTimeout(r, 1100 + Math.random() * 700));
+        await new Promise(r => setTimeout(r, 1600 + Math.random() * 900));
         if (state.gameOver || state.currentPlayer !== bot.id) return;
 
         if (bot.inJail && bot.money >= 250) {
@@ -854,7 +854,7 @@
             chargePlayer(bot, 50, null);
             log(`${bot.name} zahlt 50 € Kaution.`);
             renderAll();
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 900));
         }
 
         await rollDice();
@@ -865,18 +865,18 @@
         for (const t of botStreets) {
             const prop = state.properties[t.id];
             if (!prop.mortgaged && ownsFullGroup(bot.id, t.group) && prop.houses < 5 && bot.money - t.houseCost >= 250) {
+                await new Promise(r => setTimeout(r, 750));
                 buildHouse(bot.id, t.id);
-                await new Promise(r => setTimeout(r, 500));
             }
         }
 
         if (!state.hasRolled && !bot.inJail) {
-            // Rolled a double -> roll again
+            await new Promise(r => setTimeout(r, 1100));
             await runBotTurn(bot);
             return;
         }
 
-        await new Promise(r => setTimeout(r, 850));
+        await new Promise(r => setTimeout(r, 1450));
         nextTurn();
     }
 
