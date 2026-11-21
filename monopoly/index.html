@@ -16,6 +16,7 @@
                 <div id="turn-info" class="turn-pill">Bereit</div>
             </div>
             <div class="hud-right">
+                <button id="btn-leaderboard" class="hud-btn" title="Globales Leaderboard">🏆 Rangliste</button>
                 <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
                 <button id="btn-new" class="hud-btn">Neues Spiel</button>
             </div>
@@ -53,6 +54,7 @@
                             <button id="btn-roll" class="cta-btn">🎲 Würfeln</button>
                             <button id="btn-end-turn" class="cta-btn btn-secondary hidden">Zug beenden</button>
                             <button id="btn-jail-pay" class="cta-btn btn-warning hidden">50 € Kaution zahlen</button>
+                            <button id="btn-jail-card" class="cta-btn btn-gold hidden">🎟️ Freikarte einsetzen</button>
                         </div>
 
                         <div class="center-log" id="center-log">Willkommen bei Monopoly!</div>
@@ -201,22 +203,37 @@
         </div>
     </div>
 
-    <!-- Trade Modal -->
+    <!-- Trade Modal (Property + Cash Swap) -->
     <div class="modal-backdrop hidden" id="modal-trade">
         <div class="modal-card">
-            <h2>🤝 Straße von Bot abkaufen</h2>
-            <p class="modal-desc">Wähle eine Straße eines Gegners und biete einen Preis. Bots verkaufen eher, wenn das Angebot über dem Marktwert liegt (und ungern komplette Farbgruppen).</p>
+            <h2>🤝 Straßen-Handel</h2>
+            <p class="modal-desc">Wähle die gewünschte Straße eines Bots und biete Geld und/oder eine eigene Straße im Tausch an.</p>
             <div class="trade-form">
+                <label for="trade-prop-select">Du möchtest haben:</label>
                 <select id="trade-prop-select"></select>
+
+                <label for="trade-give-prop">Eigene Straße zum Tausch (optional):</label>
+                <select id="trade-give-prop"></select>
+
                 <div class="trade-price-row">
-                    <label for="trade-offer">Dein Angebot (€):</label>
-                    <input type="number" id="trade-offer" min="50" step="10" value="300">
+                    <label for="trade-offer">Zusätzliches Geld (€):</label>
+                    <input type="number" id="trade-offer" min="0" step="10" value="150">
                 </div>
             </div>
             <div class="modal-actions">
                 <button id="btn-trade-send" class="cta-btn">Angebot senden</button>
                 <button id="btn-trade-close" class="cta-btn btn-secondary">Abbrechen</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Cloud Leaderboard Modal -->
+    <div class="modal-backdrop hidden" id="modal-leaderboard">
+        <div class="modal-card">
+            <div class="modal-badge">🏆 GLOBALE RANGLISTE</div>
+            <p class="modal-desc">Top Monopoly-Vermögen aus deiner Cloudflare D1-Datenbank.</p>
+            <div id="leaderboard-list" class="players-list" style="margin-bottom:16px;"></div>
+            <button id="btn-lb-close" class="cta-btn btn-secondary">Schließen</button>
         </div>
     </div>
 

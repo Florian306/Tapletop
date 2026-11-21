@@ -31,6 +31,7 @@
         btnRoll: document.getElementById('btn-roll'),
         btnEndTurn: document.getElementById('btn-end-turn'),
         btnJailPay: document.getElementById('btn-jail-pay'),
+        btnJailCard: document.getElementById('btn-jail-card'),
         centerLog: document.getElementById('center-log'),
         playersList: document.getElementById('players-list'),
         myProperties: document.getElementById('my-properties'),
@@ -43,8 +44,26 @@
         modalCard: document.getElementById('modal-card'),
         modalPay: document.getElementById('modal-pay'),
         modalTrade: document.getElementById('modal-trade'),
+        modalLeaderboard: document.getElementById('modal-leaderboard'),
         modalGameover: document.getElementById('modal-gameover')
     };
+
+    function spawnCashPopup(tileId, text, isPlus = true) {
+        const tileEl = document.getElementById(`tile-${tileId}`);
+        if (!tileEl) return;
+        const pop = document.createElement('div');
+        pop.className = `float-cash ${isPlus ? 'plus' : 'minus'}`;
+        pop.textContent = text;
+        tileEl.appendChild(pop);
+        setTimeout(() => pop.remove(), 1300);
+    }
+
+    function flashTile(tileId) {
+        const tileEl = document.getElementById(`tile-${tileId}`);
+        if (!tileEl) return;
+        tileEl.classList.add('land-glow');
+        setTimeout(() => tileEl.classList.remove('land-glow'), 1100);
+    }
 
     let pendingBuyTile = null;
     let pendingCardResolve = null;
@@ -285,6 +304,7 @@
         dom.btnRoll.disabled = !isHumanTurn || state.hasRolled;
         dom.btnEndTurn.classList.toggle('hidden', !isHumanTurn || !state.hasRolled);
         dom.btnJailPay.classList.toggle('hidden', !isHumanTurn || !active.inJail || state.hasRolled || active.money < 50);
+        dom.btnJailCard.classList.toggle('hidden', !isHumanTurn || !active.inJail || state.hasRolled || !(active.jailFreeCards > 0));
 
         // Players sidebar & authentic banknotes
         if (state.players[0]) renderBanknotes(state.players[0].money);
@@ -489,6 +509,7 @@
             if (dir === 1 && player.pos === 0) {
                 player.money += 200;
                 MonoSound.money();
+                spawnCashPopup(0, '+200 €', true);
                 log(`${player.name} zieht über LOS (+200 €).`);
                 settleDebtsFor(player);
             }
@@ -519,7 +540,11 @@
         MonoSound.dice();
         dom.die1.classList.add('rolling');
         dom.die2.classList.add('rolling');
-        await new Promise(r => setTimeout(r, 350));
+        for (let f = 0; f < 5; f++) {
+            dom.die1.textContent = DIE_FACES[Math.floor(Math.random() * 6)];
+            dom.die2.textContent = DIE_FACES[Math.floor(Math.random() * 6)];
+            await new Promise(r => setTimeout(r, 85));
+        }
         dom.die1.classList.remove('rolling');
         dom.die2.classList.remove('rolling');
 
@@ -565,6 +590,7 @@
         }
 
         await movePlayerStepByStep(player, sum);
+        flashTile(player.pos);
         await handleLanding(player, sum);
         saveGame();
         renderAll();
@@ -663,8 +689,14 @@
         if (card.action === 'money') {
             player.money += card.amount;
             MonoSound.money();
+            spawnCashPopup(player.pos, `+${card.amount} €`, true);
+            settleDebtsFor(player);
         } else if (card.action === 'tax') {
             chargePlayer(player, card.amount, null);
+            spawnCashPopup(player.pos, `-${card.amount} €`, false);
+        } else if (card.action === 'jailfree') {
+            player.jailFreeCards = (player.jailFreeCards || 0) + 1;
+            log(`🎟️ ${player.name} erhält eine Gefängnis-Freikarte!`);
         } else if (card.action === 'jail') {
             sendToJail(player);
             state.hasRolled = true;
@@ -999,9 +1031,46 @@
         }
     });
 
-    // Trade Modal
+    dom.btnJailCard.addEventListener('click', () => {
+        const p = state.players[0];
+        if (!p.inJail || !(p.jailFreeCards > 0)) return;
+        p.jailFreeCards -= 1;
+        p.inJail = false;
+        p.jailTurns = 0;
+        MonoSound.buy();
+        log('🎟️ Du setzt deine Gefängnis-Freikarte ein und bist frei!');
+        saveGame();
+        renderAll();
+    });
+
+    // Cloud Leaderboard
+    document.getElementById('btn-leaderboard').addEventListener('click', async () => {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = '<span class="muted">Lade Rangliste...</span>';
+        dom.modalLeaderboard.classList.remove('hidden');
+        try {
+            const res = await fetch('/api/leaderboard?game=monopoly');
+            const data = await res.json();
+            if (data.ok && data.entries.length) {
+                list.innerHTML = data.entries.map((e, i) =>
+                    `<div class="player-row"><span>#${i + 1} ${e.player_name}</span><strong>${e.score} €</strong></div>`
+                ).join('');
+            } else {
+                list.innerHTML = '<span class="muted">Noch keine Einträge (oder D1 lokal nicht verbunden).</span>';
+            }
+        } catch {
+            list.innerHTML = '<span class="muted">Rangliste ist online auf Cloudflare Pages aktiv.</span>';
+        }
+    });
+
+    document.getElementById('btn-lb-close').addEventListener('click', () => {
+        dom.modalLeaderboard.classList.add('hidden');
+    });
+
+    // Trade Modal (Property + Cash Swap)
     document.getElementById('btn-open-trade').addEventListener('click', () => {
         const select = document.getElementById('trade-prop-select');
+        const giveSelect = document.getElementById('trade-give-prop');
         const botProps = MONO_BOARD.filter(t => state.properties[t.id] && state.properties[t.id].ownerId !== 0 && state.properties[t.id].houses === 0);
         if (!botProps.length) {
             log('Aktuell besitzt kein Bot eine handelbare Straße.');
@@ -1011,6 +1080,12 @@
             const owner = state.players[state.properties[t.id].ownerId];
             return `<option value="${t.id}">${t.name} (${owner.name} · Wert ${t.price} €)</option>`;
         }).join('');
+
+        const myProps = MONO_BOARD.filter(t => state.properties[t.id]?.ownerId === 0 && state.properties[t.id].houses === 0);
+        giveSelect.innerHTML = '<option value="">— Keine Straße (nur Geld) —</option>' + myProps.map(t =>
+            `<option value="${t.id}">${t.name} (Wert ${t.price} €)</option>`
+        ).join('');
+
         dom.modalTrade.classList.remove('hidden');
     });
 
@@ -1018,28 +1093,35 @@
 
     document.getElementById('btn-trade-send').addEventListener('click', () => {
         const tileId = parseInt(document.getElementById('trade-prop-select').value, 10);
-        const offer = parseInt(document.getElementById('trade-offer').value, 10) || 0;
+        const giveVal = document.getElementById('trade-give-prop').value;
+        const giveTileId = giveVal ? parseInt(giveVal, 10) : null;
+        const offerCash = Math.max(0, parseInt(document.getElementById('trade-offer').value, 10) || 0);
         const tile = MONO_BOARD[tileId];
         const prop = state.properties[tileId];
         const seller = state.players[prop.ownerId];
         const human = state.players[0];
 
         dom.modalTrade.classList.add('hidden');
-        if (offer > human.money) {
+        if (offerCash > human.money) {
             log('Du hast nicht genug Geld für dieses Angebot.');
             return;
         }
 
+        const offeredPropVal = giveTileId !== null ? MONO_BOARD[giveTileId].price : 0;
+        const totalOfferValue = offerCash + offeredPropVal;
         const hasFull = ownsFullGroup(seller.id, tile.group);
-        const minAccept = Math.floor(tile.price * (hasFull ? 2.2 : 1.3));
-        if (offer >= minAccept) {
-            human.money -= offer;
-            seller.money += offer;
+        const minAccept = Math.floor(tile.price * (hasFull ? 2.1 : 1.25));
+
+        if (totalOfferValue >= minAccept) {
+            human.money -= offerCash;
+            seller.money += offerCash;
             prop.ownerId = 0;
+            if (giveTileId !== null) state.properties[giveTileId].ownerId = seller.id;
             MonoSound.buy();
-            log(`🤝 Deal! ${seller.name} verkauft dir ${tile.name} für ${offer} €!`);
+            const swapTxt = giveTileId !== null ? `${MONO_BOARD[giveTileId].name} + ${offerCash} €` : `${offerCash} €`;
+            log(`🤝 Deal! Du tauschst ${swapTxt} gegen ${tile.name} von ${seller.name}!`);
         } else {
-            log(`❌ ${seller.name} lehnt ${offer} € für ${tile.name} ab (zu wenig).`);
+            log(`❌ ${seller.name} lehnt dein Angebot für ${tile.name} ab.`);
         }
         saveGame();
         renderAll();

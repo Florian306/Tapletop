@@ -49,7 +49,8 @@ const CHANCE_CARDS = [
     { text: 'Strafzettel wegen zu schnellen Fahrens: Zahle 50 €.', action: 'tax', amount: 50 },
     { text: 'Gehe direkt ins Gefängnis! Ziehe nicht über LOS.', action: 'jail' },
     { text: 'Du hast im Kreuzworträtsel gewonnen: Erhalte 150 €.', action: 'money', amount: 150 },
-    { text: 'Gehe 3 Felder zurück.', action: 'back', steps: 3 }
+    { text: 'Gehe 3 Felder zurück.', action: 'back', steps: 3 },
+    { text: '🎟️ Du kommst aus dem Gefängnis frei! Behalte diese Karte.', action: 'jailfree' }
 ];
 
 const COMMUNITY_CARDS = [
@@ -59,5 +60,6 @@ const COMMUNITY_CARDS = [
     { text: 'Schulgebühren: Zahle 100 €.', action: 'tax', amount: 100 },
     { text: 'Erbschaft! Du erhältst 150 €.', action: 'money', amount: 150 },
     { text: 'Gehe direkt ins Gefängnis!', action: 'jail' },
-    { text: 'Rücke vor bis auf LOS!', action: 'move', target: 0 }
+    { text: 'Rücke vor bis auf LOS!', action: 'move', target: 0 },
+    { text: '🎟️ Du kommst aus dem Gefängnis frei! Behalte diese Karte.', action: 'jailfree' }
 ];
