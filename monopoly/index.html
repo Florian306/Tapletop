@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monopoly — Imperium Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Top HUD -->
+        <header class="hud">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn">← Hub</a>
+                <div class="brand">MONOPOLY</div>
+                <div id="turn-info" class="turn-pill">Bereit</div>
+            </div>
+            <div class="hud-right">
+                <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
+                <button id="btn-new" class="hud-btn">Neues Spiel</button>
+            </div>
+        </header>
+
+        <!-- Main Workspace: Board + Sidebar -->
+        <main class="layout">
+            <!-- 11x11 Monopoly Board -->
+            <section class="board-wrap">
+                <div class="board" id="board">
+                    <!-- Center Area inside the board -->
+                    <div class="board-center">
+                        <div class="center-logo">MONOPOLY</div>
+                        <div class="jackpot-box">
+                            <span>Frei Parken Jackpot</span>
+                            <strong id="jackpot-amount">0 €</strong>
+                        </div>
+
+                        <div class="dice-area">
+                            <div class="die" id="die-1">⚀</div>
+                            <div class="die" id="die-2">⚀</div>
+                        </div>
+
+                        <div class="center-actions">
+                            <button id="btn-roll" class="cta-btn">🎲 Würfeln</button>
+                            <button id="btn-end-turn" class="cta-btn btn-secondary hidden">Zug beenden</button>
+                            <button id="btn-jail-pay" class="cta-btn btn-warning hidden">50 € Kaution zahlen</button>
+                        </div>
+
+                        <div class="center-log" id="center-log">Willkommen bei Monopoly!</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Sidebar: Players, Properties, Trade, Log -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>Spieler</h3>
+                    <div id="players-list" class="players-list"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Dein Besitz</h3>
+                        <button id="btn-open-trade" class="mini-btn">🤝 Handeln</button>
+                    </div>
+                    <div id="my-properties" class="prop-list">
+                        <span class="muted">Noch keine Straßen gekauft.</span>
+                    </div>
+                </div>
+
+                <div class="panel log-panel">
+                    <h3>Spielverlauf</h3>
+                    <div id="event-log" class="event-log"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Start / Resume Modal -->
+    <div class="modal-backdrop" id="modal-start">
+        <div class="modal-card">
+            <div class="modal-badge">🎩 MONOPOLY</div>
+            <h2>Imperium Edition</h2>
+            <p class="modal-desc">Komplettes 40-Felder-Brett, Häuser &amp; Hotels, Hypotheken, Handeln mit Bots und automatische Speicherung für lange Partien.</p>
+
+            <div class="start-options">
+                <label>KI-Gegner</label>
+                <div class="segmented" id="opt-bots">
+                    <button data-val="1">1 Bot</button>
+                    <button data-val="2">2 Bots</button>
+                    <button data-val="3" class="active">3 Bots</button>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-resume-save" class="cta-btn btn-gold hidden">💾 Gespeicherte Partie fortsetzen</button>
+                <button id="btn-start-new" class="cta-btn">Neue Partie starten (1.500 € Startgeld)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Property Modal -->
+    <div class="modal-backdrop hidden" id="modal-buy">
+        <div class="modal-card">
+            <div id="buy-color-bar" class="buy-bar"></div>
+            <h2 id="buy-title">Straße</h2>
+            <p id="buy-details" class="modal-desc"></p>
+            <div class="modal-actions">
+                <button id="btn-buy-yes" class="cta-btn">Kaufen</button>
+                <button id="btn-buy-no" class="cta-btn btn-secondary">Nicht kaufen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chance / Community Card Modal -->
+    <div class="modal-backdrop hidden" id="modal-card">
+        <div class="modal-card">
+            <div class="modal-badge" id="card-type-badge">Ereignisfeld</div>
+            <p id="card-text" class="card-popup-text"></p>
+            <button id="btn-card-ok" class="cta-btn">OK</button>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div class="modal-backdrop hidden" id="modal-trade">
+        <div class="modal-card">
+            <h2>🤝 Straße von Bot abkaufen</h2>
+            <p class="modal-desc">Wähle eine Straße eines Gegners und biete einen Preis. Bots verkaufen eher, wenn das Angebot über dem Marktwert liegt (und ungern komplette Farbgruppen).</p>
+            <div class="trade-form">
+                <select id="trade-prop-select"></select>
+                <div class="trade-price-row">
+                    <label for="trade-offer">Dein Angebot (€):</label>
+                    <input type="number" id="trade-offer" min="50" step="10" value="300">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-trade-send" class="cta-btn">Angebot senden</button>
+                <button id="btn-trade-close" class="cta-btn btn-secondary">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-backdrop hidden" id="modal-gameover">
+        <div class="modal-card">
+            <div class="modal-badge">🏆</div>
+            <h2 id="go-title">Spiel beendet</h2>
+            <p id="go-desc" class="modal-desc"></p>
+            <button id="btn-go-new" class="cta-btn">Neue Partie</button>
+        </div>
+    </div>
+
+    <script src="js/sound.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

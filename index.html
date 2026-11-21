@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabletop Arcade — Spiele-Hub</title>
+    <link rel="stylesheet" href="hub.css">
+</head>
+<body>
+    <div class="hub-bg"></div>
+    <main class="hub-container">
+        <header class="hub-header">
+            <div class="hub-pill">🎲 Browser Tabletop Arcade</div>
+            <h1>Wähle dein Spiel</h1>
+            <p class="hub-sub">Sofort spielbar im Browser — mit taktischen KI-Gegnern, Sound-Effekten und automatischer Speicherung.</p>
+        </header>
+
+        <section class="games-grid">
+            <!-- UNO Card -->
+            <a href="uno/index.html" class="game-card card-uno">
+                <div class="game-banner">
+                    <span class="game-emoji">🃏</span>
+                    <span class="game-tag">Fertig</span>
+                </div>
+                <div class="game-body">
+                    <h2>UNO — Realistic Edition</h2>
+                    <p>Realistische 3D-Karten, +2/+4 Stacking, Jump-In, Bluff-Check, 7-0 Regel und Bots mit Persönlichkeit.</p>
+                    <div class="game-meta">
+                        <span>⏱ 5–15 Min</span>
+                        <span>🤖 1–3 KI-Gegner</span>
+                    </div>
+                    <div class="play-btn">Jetzt spielen →</div>
+                </div>
+            </a>
+
+            <!-- Monopoly Card -->
+            <a href="monopoly/index.html" class="game-card card-monopoly">
+                <div class="game-banner">
+                    <span class="game-emoji">🎩</span>
+                    <span class="game-tag tag-new">Neu · Langzeit</span>
+                </div>
+                <div class="game-body">
+                    <h2>Monopoly — Imperium Edition</h2>
+                    <p>Komplettes 40-Felder-Brett, Häuser &amp; Hotels, Hypotheken, Handel mit KI-Bots, Frei-Parken-Jackpot &amp; Auto-Save.</p>
+                    <div class="game-meta">
+                        <span>⏱ 30–120+ Min</span>
+                        <span>💾 Auto-Save</span>
+                    </div>
+                    <div class="play-btn">Jetzt spielen →</div>
+                </div>
+            </a>
+
+            <!-- Coming Soon Card -->
+            <div class="game-card card-soon">
+                <div class="game-banner">
+                    <span class="game-emoji">🎲</span>
+                    <span class="game-tag tag-soon">Bald</span>
+                </div>
+                <div class="game-body">
+                    <h2>Weitere Klassiker</h2>
+                    <p>Mensch ärgere dich nicht, Blackjack, 4 Gewinnt oder Kniffel — jederzeit erweiterbar!</p>
+                    <div class="game-meta">
+                        <span>☁️ Cloudflare Pages ready</span>
+                    </div>
+                    <div class="play-btn disabled">In Planung</div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="hub-footer">
+            <span>Statische Web-App · 100% lokal &amp; bereit für GitHub + Cloudflare Pages</span>
+        </footer>
+    </main>
+</body>
+</html>

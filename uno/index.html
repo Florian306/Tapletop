@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNO — Realistic Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="casino">
+    <div id="app" class="app">
+        <!-- Dynamic color ambient glow -->
+        <div id="table-glow" class="table-glow glow-red" aria-hidden="true"></div>
+
+        <!-- Top HUD bar -->
+        <header class="hud-bar">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn" style="text-decoration:none;">← Hub</a>
+                <div class="brand-badge">UNO</div>
+                <div id="turn-banner" class="turn-banner">Bereit zum Spielen</div>
+                <div id="stats-pill" class="stats-pill" title="Deine Siege & aktuelle Serie">🏆 0 · 🔥 0</div>
+            </div>
+            <div class="hud-right">
+                <button id="btn-theme" class="hud-btn" title="Tisch-Theme wechseln">🎨 Theme</button>
+                <button id="btn-rules" class="hud-btn" title="Regeln">?</button>
+                <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
+                <button id="btn-menu" class="hud-btn" title="Menü / Neues Spiel">Menü</button>
+            </div>
+        </header>
+
+        <!-- Main game table -->
+        <main class="table-area" id="table-area">
+            <!-- Top opponent -->
+            <section class="seat seat-top" id="seat-top" data-seat="top">
+                <div class="chat-bubble" id="chat-top"></div>
+                <div class="player-badge">
+                    <div class="avatar" id="avatar-top">🤖</div>
+                    <div class="player-meta">
+                        <span class="player-name" id="name-top">Max</span>
+                        <span class="card-count" id="count-top">0 Karten</span>
+                    </div>
+                    <span class="uno-tag hidden" id="uno-tag-top">UNO!</span>
+                </div>
+                <div class="ai-hand ai-hand-horizontal" id="hand-top"></div>
+            </section>
+
+            <!-- Middle row -->
+            <div class="middle-row">
+                <!-- Left opponent -->
+                <section class="seat seat-left" id="seat-left" data-seat="left">
+                    <div class="chat-bubble" id="chat-left"></div>
+                    <div class="player-badge">
+                        <div class="avatar" id="avatar-left">🦊</div>
+                        <div class="player-meta">
+                            <span class="player-name" id="name-left">Luna</span>
+                            <span class="card-count" id="count-left">0 Karten</span>
+                        </div>
+                        <span class="uno-tag hidden" id="uno-tag-left">UNO!</span>
+                    </div>
+                    <div class="ai-hand ai-hand-vertical" id="hand-left"></div>
+                </section>
+
+                <!-- Center table -->
+                <section class="center-zone">
+                    <div class="direction-ring" id="direction-ring" aria-hidden="true">
+                        <svg viewBox="0 0 300 300" class="direction-svg">
+                            <defs>
+                                <marker id="arrow-head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="currentColor"></path>
+                                </marker>
+                            </defs>
+                            <path d="M 150 22 A 128 128 0 0 1 278 150" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="10 8" marker-end="url(#arrow-head)"></path>
+                            <path d="M 150 278 A 128 128 0 0 1 22 150" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="10 8" marker-end="url(#arrow-head)"></path>
+                        </svg>
+                    </div>
+
+                    <div class="piles-container">
+                        <div class="pile-wrapper">
+                            <div class="draw-pile" id="draw-pile" title="Karte ziehen (Leertaste)">
+                                <div class="pile-stack-layer layer-3"></div>
+                                <div class="pile-stack-layer layer-2"></div>
+                                <div class="pile-stack-layer layer-1" id="draw-pile-top"></div>
+                            </div>
+                            <span class="pile-label" id="deck-count">108</span>
+                        </div>
+
+                        <div class="pile-wrapper">
+                            <div class="discard-pile" id="discard-pile"></div>
+                            <div class="active-color-pill" id="active-color-pill">
+                                <span class="color-dot" id="active-color-dot"></span>
+                                <span id="active-color-text">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stack-badge hidden" id="stack-badge">
+                        <span id="stack-badge-text">+2 Stapel!</span>
+                    </div>
+
+                    <div class="action-toast" id="action-toast"></div>
+                </section>
+
+                <!-- Right opponent -->
+                <section class="seat seat-right" id="seat-right" data-seat="right">
+                    <div class="chat-bubble" id="chat-right"></div>
+                    <div class="player-badge">
+                        <div class="avatar" id="avatar-right">🦉</div>
+                        <div class="player-meta">
+                            <span class="player-name" id="name-right">Kira</span>
+                            <span class="card-count" id="count-right">0 Karten</span>
+                        </div>
+                        <span class="uno-tag hidden" id="uno-tag-right">UNO!</span>
+                    </div>
+                    <div class="ai-hand ai-hand-vertical" id="hand-right"></div>
+                </section>
+            </div>
+
+            <!-- Bottom: Human player -->
+            <section class="seat seat-bottom" id="seat-bottom">
+                <div class="player-controls-bar">
+                    <div class="player-badge player-badge-self">
+                        <div class="avatar">😎</div>
+                        <div class="player-meta">
+                            <span class="player-name" id="name-bottom">Du</span>
+                            <span class="card-count" id="count-bottom">0 Karten</span>
+                        </div>
+                        <span class="uno-tag hidden" id="uno-tag-bottom">UNO!</span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="btn-sort" class="action-btn btn-secondary" title="Hand nach Farbe sortieren (S)">Sortieren</button>
+                        <button id="btn-catch" class="action-btn btn-warning hidden">Erwischen! (+2)</button>
+                        <button id="btn-uno" class="action-btn btn-uno" disabled>UNO!</button>
+                    </div>
+                </div>
+
+                <div class="player-hand-wrapper">
+                    <div class="player-hand" id="hand-bottom"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FX & Confetti Layer -->
+        <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+    </div>
+
+    <!-- Start / Settings Modal -->
+    <div class="modal-backdrop" id="modal-start">
+        <div class="modal-card modal-start">
+            <div class="modal-logo">
+                <div class="logo-oval"><span>UNO</span></div>
+                <p class="modal-subtitle">Realistic Tabletop Edition</p>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-row-2">
+                    <div class="setting-group">
+                        <label>KI-Gegner</label>
+                        <div class="segmented" id="opt-opponents">
+                            <button data-val="1">1</button>
+                            <button data-val="2">2</button>
+                            <button data-val="3" class="active">3</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>KI-Stärke</label>
+                        <div class="segmented" id="opt-difficulty">
+                            <button data-val="normal">Normal</button>
+                            <button data-val="hard" class="active">Taktisch</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label>Tisch-Theme</label>
+                    <div class="segmented" id="opt-theme">
+                        <button data-val="casino" class="active">Casino</button>
+                        <button data-val="luxury">Luxury</button>
+                        <button data-val="cyber">Neon</button>
+                    </div>
+                </div>
+
+                <div class="setting-toggles">
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-stacking" checked>
+                        <span>+2 &amp; +4 Stapeln (Stacking)</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-uno" checked>
+                        <span>UNO-Button Pflicht (+2 Strafe)</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-seven-zero" checked>
+                        <span>7-0 Regel (7 = Tauschen, 0 = Rotieren)</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-jump-in" checked>
+                        <span>Dazwischenwerfen (Jump-In bei exakter Karte)</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-bluff" checked>
+                        <span>+4 Anzweifeln (Bluff-Check)</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-draw-until">
+                        <span>Ziehen bis eine Karte passt</span>
+                    </label>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="rule-tournament">
+                        <span>Turnier-Modus (mehrere Runden bis 500 Pkt.)</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="btn-start-game" class="primary-cta">Spiel starten</button>
+        </div>
+    </div>
+
+    <!-- Wild Color Picker Modal -->
+    <div class="modal-backdrop hidden" id="modal-color">
+        <div class="modal-card modal-color">
+            <h2>Farbe wählen</h2>
+            <div class="color-wheel">
+                <button class="color-choice color-red" data-color="red">Rot</button>
+                <button class="color-choice color-blue" data-color="blue">Blau</button>
+                <button class="color-choice color-green" data-color="green">Grün</button>
+                <button class="color-choice color-yellow" data-color="yellow">Gelb</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- +4 Bluff Challenge Modal -->
+    <div class="modal-backdrop hidden" id="modal-bluff">
+        <div class="modal-card modal-bluff">
+            <div class="gameover-icon">🕵️</div>
+            <h2>+4 Anzweifeln?</h2>
+            <p class="modal-desc" id="bluff-desc"></p>
+            <div class="gameover-actions">
+                <button id="btn-bluff-challenge" class="primary-cta btn-danger">Anzweifeln! (Bluff-Check)</button>
+                <button id="btn-bluff-accept" class="secondary-cta">Akzeptieren (Ziehen / Kontern)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-Rule Hand Swap Modal -->
+    <div class="modal-backdrop hidden" id="modal-swap">
+        <div class="modal-card modal-swap">
+            <h2>7 gespielt — Hand tauschen!</h2>
+            <p class="modal-desc">Wähle den Spieler, mit dem du alle Karten tauschen möchtest:</p>
+            <div class="swap-targets" id="swap-targets"></div>
+        </div>
+    </div>
+
+    <!-- Game Over / Round Over Modal -->
+    <div class="modal-backdrop hidden" id="modal-gameover">
+        <div class="modal-card modal-gameover">
+            <div class="gameover-icon" id="gameover-icon">🏆</div>
+            <h2 id="gameover-title">Du hast gewonnen!</h2>
+            <p id="gameover-desc" class="modal-desc"></p>
+            <div class="scoreboard" id="scoreboard"></div>
+            <div class="gameover-actions">
+                <button id="btn-play-again" class="primary-cta">Nochmal spielen</button>
+                <button id="btn-back-menu" class="secondary-cta">Einstellungen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="modal-backdrop hidden" id="modal-rules">
+        <div class="modal-card modal-rules">
+            <h2>Spielregeln &amp; Features</h2>
+            <ul class="rules-list">
+                <li><strong>+2 / +4 Stapeln:</strong> Auf +2 darf +2, auf +4 darf +4 gelegt werden.</li>
+                <li><strong>Dazwischenwerfen (Jump-In):</strong> Hast du <em>exakt</em> dieselbe Karte (Farbe + Wert), leuchtet sie cyan auf — klicke sie sofort, auch wenn du nicht dran bist!</li>
+                <li><strong>+4 Anzweifeln:</strong> Hatte der Werfer die alte Farbe doch auf der Hand, zieht <em>er</em> +4. Lagst du falsch, ziehst <em>du</em> +6!</li>
+                <li><strong>7-0 Regel:</strong> 7 = Hand tauschen, 0 = alle Hände rotieren.</li>
+                <li><strong>Tastatur:</strong> <code>Leertaste</code> = Ziehen, <code>U</code> = UNO, <code>S</code> = Sortieren.</li>
+            </ul>
+            <button id="btn-close-rules" class="primary-cta">Verstanden</button>
+        </div>
+    </div>
+
+    <script src="js/sound.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
