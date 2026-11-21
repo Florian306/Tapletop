@@ -11,6 +11,7 @@
     let state = {
         players: [],
         properties: {}, // tileId -> { ownerId, houses: 0..5, mortgaged: false }
+        debts: [], // { fromId, toId, amount }
         currentPlayer: 0,
         jackpot: 0,
         hasRolled: false,
@@ -216,6 +217,7 @@
                 { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
             ],
             properties: {},
+            debts: [],
             currentPlayer: 0,
             jackpot: 0,
             hasRolled: false,
@@ -291,7 +293,9 @@
             const row = document.createElement('div');
             row.className = 'player-row' + (idx === state.currentPlayer ? ' active' : '') + (p.bankrupt ? ' bankrupt' : '');
             const jailTag = p.inJail ? ' 🔒' : '';
-            row.innerHTML = `<span>${p.token} ${p.name}${jailTag}</span><strong>${p.money} €</strong>`;
+            const totalDebt = (state.debts || []).filter(d => d.fromId === p.id).reduce((s, d) => s + d.amount, 0);
+            const debtTag = totalDebt > 0 ? `<span class="debt-badge">-${totalDebt} €</span>` : '';
+            row.innerHTML = `<span>${p.token} ${p.name}${jailTag}${debtTag}</span><strong>${p.money} €</strong>`;
             dom.playersList.appendChild(row);
         });
 
@@ -329,7 +333,7 @@
             const tokensEl = document.getElementById(`tokens-${p.pos}`);
             if (tokensEl) {
                 const span = document.createElement('span');
-                span.className = 'token';
+                span.className = 'token' + (p.isHuman ? ' token-self' : '') + (p._hopping ? ' hopping' : '');
                 span.textContent = p.token;
                 tokensEl.appendChild(span);
             }
@@ -409,12 +413,47 @@
         renderAll();
     }
 
+    function settleDebtsFor(player) {
+        if (!state.debts || !state.debts.length || player.money <= 0) return;
+        for (let i = state.debts.length - 1; i >= 0; i--) {
+            const d = state.debts[i];
+            if (d.fromId !== player.id) continue;
+            const pay = Math.min(player.money, d.amount);
+            if (pay <= 0) break;
+            player.money -= pay;
+            state.players[d.toId].money += pay;
+            d.amount -= pay;
+            log(`💳 ${player.name} zahlt ${pay} € Schulden an ${state.players[d.toId].name} zurück.`);
+            if (d.amount <= 0) state.debts.splice(i, 1);
+        }
+    }
+
     function chargePlayer(player, amount, recipientId = null) {
-        player.money -= amount;
-        if (recipientId !== null) {
-            state.players[recipientId].money += amount;
+        if (!state.debts) state.debts = [];
+
+        // Allow taking debt from another player if cash isn't enough
+        if (recipientId !== null && player.money < amount) {
+            const cashPaid = Math.max(0, player.money);
+            const debtAdded = amount - cashPaid;
+            player.money -= cashPaid;
+            state.players[recipientId].money += cashPaid;
+
+            const existing = state.debts.find(d => d.fromId === player.id && d.toId === recipientId);
+            if (existing) existing.amount += debtAdded;
+            else state.debts.push({ fromId: player.id, toId: recipientId, amount: debtAdded });
+
+            log(`💳 ${player.name} macht ${debtAdded} € Schulden bei ${state.players[recipientId].name}!`);
+
+            const totalDebt = state.debts.filter(d => d.fromId === player.id).reduce((s, d) => s + d.amount, 0);
+            if (totalDebt <= 600) return;
         } else {
-            state.jackpot += amount;
+            player.money -= amount;
+            if (recipientId !== null) {
+                state.players[recipientId].money += amount;
+                settleDebtsFor(state.players[recipientId]);
+            } else {
+                state.jackpot += amount;
+            }
         }
 
         // Auto-mortgage if negative
@@ -431,13 +470,33 @@
 
         if (player.money < 0) {
             player.bankrupt = true;
-            // Release properties
             Object.keys(state.properties).forEach(k => {
                 if (state.properties[k].ownerId === player.id) delete state.properties[k];
             });
+            state.debts = state.debts.filter(d => d.fromId !== player.id && d.toId !== player.id);
             log(`💀 ${player.name} ist BANKROTT und scheidet aus!`);
             checkVictory();
         }
+    }
+
+    async function movePlayerStepByStep(player, steps) {
+        const dir = steps >= 0 ? 1 : -1;
+        const count = Math.abs(steps);
+        for (let i = 0; i < count; i++) {
+            player.pos = (player.pos + dir + 40) % 40;
+            player._hopping = true;
+            MonoSound.step();
+            if (dir === 1 && player.pos === 0) {
+                player.money += 200;
+                MonoSound.money();
+                log(`${player.name} zieht über LOS (+200 €).`);
+                settleDebtsFor(player);
+            }
+            renderAll();
+            await new Promise(r => setTimeout(r, 155));
+            player._hopping = false;
+        }
+        renderAll();
     }
 
     function checkVictory() {
@@ -505,15 +564,7 @@
             }
         }
 
-        const oldPos = player.pos;
-        player.pos = (player.pos + sum) % 40;
-        if (player.pos < oldPos) {
-            player.money += 200;
-            MonoSound.money();
-            log(`${player.name} zieht über LOS (+200 €).`);
-        }
-
-        renderAll();
+        await movePlayerStepByStep(player, sum);
         await handleLanding(player, sum);
         saveGame();
         renderAll();

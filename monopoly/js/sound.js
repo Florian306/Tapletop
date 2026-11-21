@@ -33,6 +33,7 @@ const MonoSound = (() => {
 
     return {
         toggle() { enabled = !enabled; return enabled; },
+        step() { tone(480, 0.04, 'triangle', 0.05, 0); },
         dice() { tone(260, 0.06, 'square', 0.06, 0); tone(340, 0.06, 'square', 0.06, 0.07); tone(420, 0.07, 'square', 0.06, 0.14); },
         buy() { tone(523, 0.1, 'triangle', 0.12, 0); tone(659, 0.16, 'triangle', 0.12, 0.08); },
         money() { tone(784, 0.08, 'sine', 0.1, 0); tone(1046, 0.14, 'sine', 0.1, 0.07); },
