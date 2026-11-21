@@ -760,7 +760,18 @@ body {
 
 .deed-header small { display: block; font-size: 0.7rem; letter-spacing: 1px; opacity: 0.9; }
 .deed-body { font-size: 0.88rem; margin-bottom: 16px; text-align: left; }
-.deed-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed rgba(20, 32, 25, 0.2); }
+.deed-row { display: flex; justify-content: space-between; padding: 4px 6px; border-bottom: 1px dashed rgba(20, 32, 25, 0.2); border-radius: 5px; }
+.deed-row.active-rent-row { background: rgba(22, 163, 74, 0.18); font-weight: 900; color: #14532d; }
+.deed-current-rent {
+    text-align: center;
+    background: #14633a;
+    color: #fff;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
 .deed-price-tag { text-align: center; font-size: 1.1rem; font-weight: 900; margin-top: 10px; color: #14633a; }
 
 .modal-badge { font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; color: #ffd700; }

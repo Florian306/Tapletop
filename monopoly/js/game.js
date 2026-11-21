@@ -877,21 +877,27 @@
             : '<span class="muted">Kein Bargeld</span>';
     }
 
-    function buildDeedDetailsHTML(tile) {
+    function buildDeedDetailsHTML(tile, prop = null) {
+        const activeHouses = prop ? (prop.houses || 0) : -1;
+        const currentBanner = prop
+            ? `<div class="deed-current-rent">${prop.mortgaged ? 'VERPFÄNDET (0 € Miete)' : `AKTUELLE MIETE: ${calcRent(tile, 7)} €${prop.renovated ? ' ✨' : ''}`}</div>`
+            : '';
+
         if (tile.type === 'street') {
-            return `
-                <div class="deed-row"><span>Miete (unbebaut)</span><strong>${tile.rent[0]} €</strong></div>
-                <div class="deed-row"><span>Mit 1 Haus</span><strong>${tile.rent[1]} €</strong></div>
-                <div class="deed-row"><span>Mit 2 Häusern</span><strong>${tile.rent[2]} €</strong></div>
-                <div class="deed-row"><span>Mit 3 Häusern</span><strong>${tile.rent[3]} €</strong></div>
-                <div class="deed-row"><span>Mit 4 Häusern</span><strong>${tile.rent[4]} €</strong></div>
-                <div class="deed-row"><span>Mit Hotel 🏨</span><strong>${tile.rent[5]} €</strong></div>
+            const cls = lvl => (prop && !prop.mortgaged && activeHouses === lvl ? ' active-rent-row' : '');
+            return currentBanner + `
+                <div class="deed-row${cls(0)}"><span>Miete (unbebaut)</span><strong>${tile.rent[0]} €</strong></div>
+                <div class="deed-row${cls(1)}"><span>Mit 1 Haus</span><strong>${tile.rent[1]} €</strong></div>
+                <div class="deed-row${cls(2)}"><span>Mit 2 Häusern</span><strong>${tile.rent[2]} €</strong></div>
+                <div class="deed-row${cls(3)}"><span>Mit 3 Häusern</span><strong>${tile.rent[3]} €</strong></div>
+                <div class="deed-row${cls(4)}"><span>Mit 4 Häusern</span><strong>${tile.rent[4]} €</strong></div>
+                <div class="deed-row${cls(5)}"><span>Mit Hotel 🏨</span><strong>${tile.rent[5]} €</strong></div>
                 <div class="deed-row"><span>Hauspreis</span><strong>${tile.houseCost} €</strong></div>
                 <div class="deed-row"><span>Hypothekenwert</span><strong>${Math.floor(tile.price / 2)} €</strong></div>
             `;
         }
         if (tile.type === 'railroad') {
-            return `
+            return currentBanner + `
                 <div class="deed-row"><span>1 Bahnhof</span><strong>25 €</strong></div>
                 <div class="deed-row"><span>2 Bahnhöfe</span><strong>50 €</strong></div>
                 <div class="deed-row"><span>3 Bahnhöfe</span><strong>100 €</strong></div>
@@ -899,7 +905,7 @@
                 <div class="deed-row"><span>Hypothekenwert</span><strong>100 €</strong></div>
             `;
         }
-        return `<div class="deed-row"><span>1 Werk</span><strong>4× Würfelzahl</strong></div>
+        return currentBanner + `<div class="deed-row"><span>1 Werk</span><strong>4× Würfelzahl</strong></div>
                 <div class="deed-row"><span>2 Werke</span><strong>10× Würfelzahl</strong></div>
                 <div class="deed-row"><span>Hypothekenwert</span><strong>75 €</strong></div>`;
     }
@@ -907,7 +913,7 @@
     function openInspectModal(tileId) {
         const tile = MONO_BOARD[tileId];
         if (!tile) return;
-        const prop = state.properties[tileId];
+        const prop = state.properties[tileId] || null;
         const owner = prop ? state.players[prop.ownerId] : null;
 
         document.getElementById('inspect-color-bar').style.background = tile.color || '#334155';
@@ -915,7 +921,7 @@
             ? `BESITZER: ${owner.token} ${owner.name.toUpperCase()}${prop.mortgaged ? ' (HYPOTHEK)' : ''}`
             : `ZU VERKAUFEN · ${tile.price} €`;
         document.getElementById('inspect-title').textContent = tile.name;
-        document.getElementById('inspect-details').innerHTML = buildDeedDetailsHTML(tile);
+        document.getElementById('inspect-details').innerHTML = buildDeedDetailsHTML(tile, prop);
         dom.modalInspect.classList.remove('hidden');
     }
 
@@ -1003,6 +1009,44 @@
         dom.modalBuy.classList.remove('hidden');
     }
 
+    function triggerBankIntervention() {
+        const alive = state.players.filter(p => !p.bankrupt);
+        if (alive.length < 2) return;
+        const sorted = [...alive].sort((a, b) => b.money - a.money);
+        const richest = sorted[0];
+        const poorest = sorted[sorted.length - 1];
+        const roll = Math.floor(Math.random() * 3);
+
+        if (roll === 0 && richest.money >= 500) {
+            const tax = Math.floor(richest.money * 0.1);
+            chargePlayer(richest, tax, null);
+            spawnCashPopup(richest.pos, `-${tax} €`, false);
+            log(`🏦 BANK-EINGRIFF: Steuerprüfung! ${richest.name} zahlt ${tax} € (10%) in den Jackpot!`);
+        } else if (roll === 1) {
+            poorest.money += 150;
+            MonoSound.money();
+            spawnCashPopup(poorest.pos, '+150 €', true);
+            log(`🏦 BANK-EINGRIFF: Konjunkturhilfe! ${poorest.name} erhält +150 € von der Bank!`);
+        } else {
+            let paidAny = false;
+            alive.forEach(p => {
+                const houses = Object.values(state.properties).filter(pr => pr.ownerId === p.id).reduce((s, pr) => s + (pr.houses || 0), 0);
+                if (houses > 0) {
+                    const bonus = houses * 30;
+                    p.money += bonus;
+                    paidAny = true;
+                }
+            });
+            if (paidAny) {
+                MonoSound.money();
+                log(`🏦 BANK-EINGRIFF: Wohnungsbau-Prämie! +30 € Bonus pro gebautem Haus!`);
+            } else {
+                state.jackpot += 100;
+                log(`🏦 BANK-EINGRIFF: Die Bank legt +100 € extra in den Frei-Parken-Jackpot!`);
+            }
+        }
+    }
+
     function nextTurn() {
         if (state.gameOver) return;
         state.hasRolled = false;
@@ -1020,6 +1064,11 @@
         if (!state.etfHistory) state.etfHistory = [100];
         state.etfHistory.push(state.etfPrice);
         if (state.etfHistory.length > 24) state.etfHistory.shift();
+
+        // Active Bank intervention every 9 turns!
+        if (state.turnCount > 0 && state.turnCount % 9 === 0) {
+            triggerBankIntervention();
+        }
         recordNetWorthSnapshot();
 
         let safety = 0;
