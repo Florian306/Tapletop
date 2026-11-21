@@ -1141,21 +1141,42 @@
             await new Promise(r => setTimeout(r, 350));
         }
 
-        // Aggressive bot trade offers (prioritizes completing a color group!)
-        if (Math.random() < 0.35 && bot.money >= 280 && !state.players[0].bankrupt) {
-            const humanStreets = MONO_BOARD.filter(t => state.properties[t.id]?.ownerId === 0 && state.properties[t.id].houses === 0 && !state.properties[t.id].mortgaged);
-            if (humanStreets.length > 0) {
-                const priority = humanStreets.find(t => MONO_BOARD.some(m => m.group === t.group && state.properties[m.id]?.ownerId === bot.id));
-                const target = priority || humanStreets[Math.floor(Math.random() * humanStreets.length)];
+        // Aggressive bot trade offers against ALL other players (human AND other bots!)
+        if (Math.random() < 0.4 && bot.money >= 280) {
+            const otherStreets = MONO_BOARD.filter(t => {
+                const pr = state.properties[t.id];
+                return pr && pr.ownerId !== bot.id && pr.houses === 0 && !pr.mortgaged && !state.players[pr.ownerId].bankrupt;
+            });
+            if (otherStreets.length > 0) {
+                const priority = otherStreets.find(t => MONO_BOARD.some(m => m.group === t.group && state.properties[m.id]?.ownerId === bot.id));
+                const target = priority || otherStreets[Math.floor(Math.random() * otherStreets.length)];
+                const sellerId = state.properties[target.id].ownerId;
+                const seller = state.players[sellerId];
                 const mult = priority ? 1.45 : 1.25;
                 const offer = Math.min(bot.money - 100, Math.round(target.price * mult));
+
                 if (offer >= target.price) {
-                    await new Promise(resolve => {
-                        pendingBotOffer = { botId: bot.id, tileId: target.id, offer, resolve };
-                        document.getElementById('bot-offer-title').textContent = `🤝 Angebot von ${bot.token} ${bot.name}`;
-                        document.getElementById('bot-offer-desc').textContent = `${bot.name} will ${target.name} unbedingt haben und bietet dir ${offer} € (Wert: ${target.price} €). Deal?`;
-                        dom.modalBotOffer.classList.remove('hidden');
-                    });
+                    if (seller.isHuman) {
+                        await new Promise(resolve => {
+                            pendingBotOffer = { botId: bot.id, tileId: target.id, offer, resolve };
+                            document.getElementById('bot-offer-title').textContent = `🤝 Angebot von ${bot.token} ${bot.name}`;
+                            document.getElementById('bot-offer-desc').textContent = `${bot.name} will ${target.name} unbedingt haben und bietet dir ${offer} € (Wert: ${target.price} €). Deal?`;
+                            dom.modalBotOffer.classList.remove('hidden');
+                        });
+                    } else {
+                        // Bot-to-bot negotiation!
+                        const sellerHasFull = ownsFullGroup(seller.id, target.group);
+                        const minAccept = Math.floor(target.price * (sellerHasFull ? 2.2 : 1.3));
+                        if (offer >= minAccept) {
+                            bot.money -= offer;
+                            seller.money += offer;
+                            state.properties[target.id].ownerId = bot.id;
+                            MonoSound.buy();
+                            botSay(bot, [`Deal mit ${seller.name}! 🤝`, `${target.name} gehört jetzt mir! 😎`]);
+                            log(`🤝 Bot-Deal: ${bot.name} kauft ${target.name} von ${seller.name} für ${offer} €!`);
+                            renderAll();
+                        }
+                    }
                 }
             }
         }
