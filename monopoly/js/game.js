@@ -60,11 +60,25 @@
         modalBank: document.getElementById('modal-bank'),
         modalBotOffer: document.getElementById('modal-bot-offer'),
         modalChart: document.getElementById('modal-chart'),
+        modalParking: document.getElementById('modal-parking'),
         marketTicker: document.getElementById('market-ticker'),
+        botSpeech: document.getElementById('bot-speech'),
         modalGameover: document.getElementById('modal-gameover')
     };
 
+    let selectedToken = '🎩';
     let pendingBotOffer = null;
+    let pendingParkingResolve = null;
+    let speechTimer = null;
+
+    function botSay(bot, lines) {
+        if (!bot || bot.isHuman || !dom.botSpeech) return;
+        const text = Array.isArray(lines) ? lines[Math.floor(Math.random() * lines.length)] : lines;
+        dom.botSpeech.textContent = `${bot.token} ${bot.name}: „${text}“`;
+        dom.botSpeech.classList.add('show');
+        clearTimeout(speechTimer);
+        speechTimer = setTimeout(() => dom.botSpeech.classList.remove('show'), 2800);
+    }
 
     function spawnCashPopup(tileId, text, isPlus = true) {
         const tileEl = document.getElementById(`tile-${tileId}`);
@@ -249,9 +263,11 @@
     }
 
     function startNewGame() {
+        const nameInput = document.getElementById('player-name-input');
+        const playerName = (nameInput?.value || '').trim() || 'Du';
         state = {
             players: [
-                { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, savings: 0, etfShares: 0, bankLoan: 0, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
+                { id: 0, name: playerName, token: selectedToken, color: '#22c55e', money: 1500, savings: 0, etfShares: 0, bankLoan: 0, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
             ],
             properties: {},
             debts: [],
@@ -427,6 +443,7 @@
                     </div>
                     <div class="mini-deed-actions">
                         ${canBuild ? `<button class="prop-btn" data-build="${tile.id}">+🏠</button>` : ''}
+                        ${isHumanTurn && prop.houses > 0 ? `<button class="prop-btn" style="background:#dc2626;" data-sellhouse="${tile.id}" title="Haus verkaufen (+${Math.floor(tile.houseCost / 2)} €)">-🏠</button>` : ''}
                         ${canRenovate ? `<button class="prop-btn" style="background:#ca8a04;" data-reno="${tile.id}" title="Renovieren (${renoCost} € -> +50% Miete)">✨</button>` : ''}
                         ${isHumanTurn && prop.houses === 0 ? `<button class="prop-btn mort" data-mort="${tile.id}">${prop.mortgaged ? 'Lösen' : 'Hyp.'}</button>` : ''}
                     </div>
@@ -440,6 +457,9 @@
 
             dom.myProperties.querySelectorAll('[data-build]').forEach(btn => {
                 btn.addEventListener('click', () => buildHouse(0, parseInt(btn.dataset.build, 10)));
+            });
+            dom.myProperties.querySelectorAll('[data-sellhouse]').forEach(btn => {
+                btn.addEventListener('click', () => sellHouse(0, parseInt(btn.dataset.sellhouse, 10)));
             });
             dom.myProperties.querySelectorAll('[data-reno]').forEach(btn => {
                 btn.addEventListener('click', () => renovateStreet(0, parseInt(btn.dataset.reno, 10)));
@@ -462,6 +482,20 @@
         prop.renovated = true;
         MonoSound.buy();
         log(`✨ ${player.name} renoviert ${tile.name} für ${cost} € (+50% Miete)!`);
+        saveGame();
+        renderAll();
+    }
+
+    function sellHouse(playerId, tileId) {
+        const player = state.players[playerId];
+        const tile = MONO_BOARD[tileId];
+        const prop = state.properties[tileId];
+        if (!prop || prop.ownerId !== playerId || !(prop.houses > 0)) return;
+        const refund = Math.floor(tile.houseCost / 2);
+        prop.houses -= 1;
+        player.money += refund;
+        MonoSound.money();
+        log(`🏚️ ${player.name} verkauft 1 Haus auf ${tile.name} (+${refund} €).`);
         saveGame();
         renderAll();
     }
@@ -687,6 +721,7 @@
         player.inJail = true;
         player.jailTurns = 0;
         MonoSound.jail();
+        if (!player.isHuman) botSay(player, ['Ich bin unschuldig!! 😤', 'Justizirrtum! 🚔']);
         log(`🚔 ${player.name} muss ins Gefängnis!`);
     }
 
@@ -701,10 +736,20 @@
 
         if (tile.type === 'parking') {
             if (state.jackpot > 0) {
-                player.money += state.jackpot;
-                MonoSound.money();
-                log(`🎉 ${player.name} kassiert den Frei-Parken-Jackpot: +${state.jackpot} €!`);
-                state.jackpot = 0;
+                if (player.isHuman) {
+                    await new Promise(resolve => {
+                        pendingParkingResolve = resolve;
+                        document.getElementById('parking-amount').textContent = `${state.jackpot} €`;
+                        dom.modalParking.classList.remove('hidden');
+                    });
+                } else {
+                    player.money += state.jackpot;
+                    MonoSound.money();
+                    spawnCashPopup(20, `+${state.jackpot} €`, true);
+                    botSay(player, ['Jackpot!! 🤑', 'Danke für die Spenden! 😎']);
+                    log(`🎉 ${player.name} kassiert den Frei-Parken-Jackpot: +${state.jackpot} €!`);
+                    state.jackpot = 0;
+                }
             } else {
                 log(`${player.name} ruht sich auf Frei Parken aus.`);
             }
@@ -764,6 +809,10 @@
                 }
                 chargePlayer(player, rent, owner.id);
                 MonoSound.money();
+                spawnCashPopup(tile.id, `-${rent} €`, false);
+                if (!player.isHuman && rent >= 50) {
+                    botSay(player, [`Aua, ${rent} € Miete?! 😭`, 'Wucher!! 😤', 'Das tat weh…']);
+                }
                 log(`${player.name} zahlt ${rent} € Miete an ${owner.name} (${tile.name}).`);
             }
         }
@@ -1445,6 +1494,48 @@
         }
         saveGame();
         renderAll();
+    });
+
+    document.querySelectorAll('#opt-token button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#opt-token button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedToken = btn.dataset.val;
+        });
+    });
+
+    document.getElementById('btn-parking-safe').addEventListener('click', () => {
+        dom.modalParking.classList.add('hidden');
+        const p = state.players[0];
+        const amt = state.jackpot;
+        p.money += amt;
+        state.jackpot = 0;
+        MonoSound.money();
+        spawnCashPopup(20, `+${amt} €`, true);
+        log(`🎉 Du nimmst den Frei-Parken-Jackpot sicher mit: +${amt} €!`);
+        if (pendingParkingResolve) { const r = pendingParkingResolve; pendingParkingResolve = null; r(); }
+    });
+
+    document.getElementById('btn-parking-gamble').addEventListener('click', () => {
+        dom.modalParking.classList.add('hidden');
+        const p = state.players[0];
+        const roll = 1 + Math.floor(Math.random() * 6);
+        if (roll % 2 === 0) {
+            const win = state.jackpot * 2;
+            p.money += win;
+            state.jackpot = 0;
+            MonoSound.win();
+            spawnCashPopup(20, `+${win} €`, true);
+            log(`🎰 GERADE (${roll})! Jackpot VERDOPPELT: +${win} €!!`);
+        } else {
+            const half = Math.floor(state.jackpot / 2);
+            p.money += half;
+            state.jackpot -= half;
+            MonoSound.jail();
+            spawnCashPopup(20, `+${half} €`, true);
+            log(`🎰 Ungerade (${roll})… Du bekommst die Hälfte (+${half} €), der Rest bleibt im Pott.`);
+        }
+        if (pendingParkingResolve) { const r = pendingParkingResolve; pendingParkingResolve = null; r(); }
     });
 
     document.querySelectorAll('#opt-bots button').forEach(btn => {

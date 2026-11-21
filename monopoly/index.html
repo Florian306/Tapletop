@@ -61,6 +61,7 @@
                         </div>
 
                         <div class="center-log" id="center-log">Willkommen bei Monopoly!</div>
+                        <div class="bot-speech" id="bot-speech"></div>
                     </div>
                 </div>
             </section>
@@ -106,7 +107,20 @@
             <p class="modal-desc">Komplettes 40-Felder-Brett, Häuser &amp; Hotels, Hypotheken, Handeln mit Bots und automatische Speicherung für lange Partien.</p>
 
             <div class="start-options">
-                <label>KI-Gegner</label>
+                <label for="player-name-input">Dein Name (für die Rangliste)</label>
+                <input type="text" id="player-name-input" class="name-input" maxlength="20" placeholder="Dein Name..." value="Du">
+
+                <label style="margin-top:10px;">Deine Spielfigur</label>
+                <div class="segmented" id="opt-token">
+                    <button data-val="🎩" class="active">🎩</button>
+                    <button data-val="🚗">🚗</button>
+                    <button data-val="🐕">🐕</button>
+                    <button data-val="⛵">⛵</button>
+                    <button data-val="👑">👑</button>
+                    <button data-val="🦖">🦖</button>
+                </div>
+
+                <label style="margin-top:10px;">KI-Gegner</label>
                 <div class="segmented" id="opt-bots">
                     <button data-val="1">1 Bot</button>
                     <button data-val="2">2 Bots</button>
@@ -310,6 +324,19 @@
             <canvas id="networth-canvas" width="460" height="220" style="width:100%;background:rgba(0,0,0,0.35);border-radius:10px;margin-bottom:12px;"></canvas>
             <div id="chart-legend" class="chart-legend"></div>
             <button id="btn-chart-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Free Parking Risk Modal -->
+    <div class="modal-backdrop hidden" id="modal-parking">
+        <div class="modal-card">
+            <div class="modal-badge">🎰 FREI PARKEN JACKPOT</div>
+            <h2 id="parking-amount">0 €</h2>
+            <p class="modal-desc">Willst du den Jackpot sicher einsacken — oder zocken? Bei einer <strong>geraden</strong> Würfelzahl wird er <strong>verdoppelt</strong>, bei ungerade halbiert!</p>
+            <div class="modal-actions">
+                <button id="btn-parking-safe" class="cta-btn">💰 Sicher mitnehmen</button>
+                <button id="btn-parking-gamble" class="cta-btn btn-warning">🎲 Alles oder Nichts (×2 / ÷2)</button>
+            </div>
         </div>
     </div>
 
