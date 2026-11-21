@@ -28,9 +28,19 @@
                 <div class="board" id="board">
                     <!-- Center Area inside the board -->
                     <div class="board-center">
+                        <!-- Classic diagonal card decks -->
+                        <div class="deck-slot deck-community" aria-hidden="true">
+                            <span>📦</span>
+                            <small>GEMEINSCHAFT</small>
+                        </div>
+                        <div class="deck-slot deck-chance" aria-hidden="true">
+                            <span>❓</span>
+                            <small>EREIGNIS</small>
+                        </div>
+
                         <div class="center-logo">MONOPOLY</div>
                         <div class="jackpot-box">
-                            <span>Frei Parken Jackpot</span>
+                            <span>🅿️ Frei Parken Jackpot</span>
                             <strong id="jackpot-amount">0 €</strong>
                         </div>
 
@@ -55,6 +65,14 @@
                 <div class="panel">
                     <h3>Spieler</h3>
                     <div id="players-list" class="players-list"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>💵 Deine Geldscheine</h3>
+                        <strong id="wallet-total" class="wallet-total">1.500 €</strong>
+                    </div>
+                    <div id="bill-tray" class="bill-tray"></div>
                 </div>
 
                 <div class="panel">
@@ -98,12 +116,14 @@
         </div>
     </div>
 
-    <!-- Buy Property Modal -->
+    <!-- Buy Property Modal (Authentic Title Deed Card) -->
     <div class="modal-backdrop hidden" id="modal-buy">
-        <div class="modal-card">
-            <div id="buy-color-bar" class="buy-bar"></div>
-            <h2 id="buy-title">Straße</h2>
-            <p id="buy-details" class="modal-desc"></p>
+        <div class="modal-card deed-card">
+            <div id="buy-color-bar" class="deed-header">
+                <small>BESITZRECHTSKARTE</small>
+                <h2 id="buy-title">Straße</h2>
+            </div>
+            <div id="buy-details" class="deed-body"></div>
             <div class="modal-actions">
                 <button id="btn-buy-yes" class="cta-btn">Kaufen</button>
                 <button id="btn-buy-no" class="cta-btn btn-secondary">Nicht kaufen</button>

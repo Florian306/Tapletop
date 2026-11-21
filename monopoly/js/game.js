@@ -52,30 +52,52 @@
         return { row: 1 + (id - 30), col: 11 };
     }
 
+    function getTileIcon(tile) {
+        switch (tile.type) {
+            case 'go': return '🏁';
+            case 'jail': return '🚔';
+            case 'parking': return '🅿️';
+            case 'gotojail': return '👮';
+            case 'railroad': return '🚂';
+            case 'chance': return '❓';
+            case 'community': return '📦';
+            case 'tax': return '💎';
+            case 'utility': return tile.id === 12 ? '💡' : '🚰';
+            default: return '';
+        }
+    }
+
+    function getTileSide(id) {
+        if (id > 0 && id < 10) return 'side-bottom';
+        if (id > 10 && id < 20) return 'side-left';
+        if (id > 20 && id < 30) return 'side-top';
+        if (id > 30 && id < 40) return 'side-right';
+        return 'corner';
+    }
+
     function buildBoardDOM() {
-        // Remove old tiles, keep board-center
         dom.board.querySelectorAll('.tile').forEach(t => t.remove());
 
         MONO_BOARD.forEach(tile => {
             const el = document.createElement('div');
-            const isCorner = [0, 10, 20, 30].includes(tile.id);
-            el.className = 'tile' + (isCorner ? ' corner' : '');
+            const side = getTileSide(tile.id);
+            el.className = `tile ${side}`;
             el.id = `tile-${tile.id}`;
             const pos = getGridPos(tile.id);
             el.style.gridRow = pos.row;
             el.style.gridColumn = pos.col;
 
+            const icon = getTileIcon(tile);
             let inner = '';
             if (tile.color && tile.type === 'street') {
                 inner += `<div class="tile-bar" id="bar-${tile.id}" style="background:${tile.color}"></div>`;
             }
+            inner += `<div class="tile-content">`;
+            if (icon) inner += `<div class="tile-icon">${icon}</div>`;
             inner += `<div class="tile-name">${tile.name}</div>`;
-            if (tile.price) {
-                inner += `<div class="tile-price">${tile.price} €</div>`;
-            } else if (tile.amount) {
-                inner += `<div class="tile-price">-${tile.amount} €</div>`;
-            }
-            inner += `<div class="tokens-layer" id="tokens-${tile.id}"></div>`;
+            if (tile.price) inner += `<div class="tile-price">${tile.price} €</div>`;
+            else if (tile.amount) inner += `<div class="tile-price">-${tile.amount} €</div>`;
+            inner += `</div><div class="tokens-layer" id="tokens-${tile.id}"></div>`;
             el.innerHTML = inner;
             dom.board.appendChild(el);
         });
@@ -183,7 +205,8 @@
         dom.btnEndTurn.classList.toggle('hidden', !isHumanTurn || !state.hasRolled);
         dom.btnJailPay.classList.toggle('hidden', !isHumanTurn || !active.inJail || state.hasRolled || active.money < 50);
 
-        // Players sidebar
+        // Players sidebar & authentic banknotes
+        if (state.players[0]) renderBanknotes(state.players[0].money);
         dom.playersList.innerHTML = '';
         state.players.forEach((p, idx) => {
             const row = document.createElement('div');
@@ -512,11 +535,55 @@
         }
     }
 
+    function renderBanknotes(amount) {
+        const tray = document.getElementById('bill-tray');
+        const totalEl = document.getElementById('wallet-total');
+        if (!tray || !totalEl) return;
+        totalEl.textContent = `${amount.toLocaleString('de-DE')} €`;
+        const denoms = [500, 100, 50, 20, 10, 5, 1];
+        let rem = Math.max(0, amount);
+        const bills = [];
+        for (const d of denoms) {
+            const cnt = Math.floor(rem / d);
+            if (cnt > 0) {
+                bills.push({ d, cnt });
+                rem -= cnt * d;
+            }
+        }
+        tray.innerHTML = bills.length
+            ? bills.map(b => `<div class="banknote bill-${b.d}">${b.d} €<span class="bill-count">×${b.cnt}</span></div>`).join('')
+            : '<span class="muted">Kein Bargeld</span>';
+    }
+
     function openBuyModal(tile) {
         pendingBuyTile = tile;
         document.getElementById('buy-color-bar').style.background = tile.color || '#334155';
         document.getElementById('buy-title').textContent = tile.name;
-        document.getElementById('buy-details').textContent = `Kaufpreis: ${tile.price} € · Dein Guthaben: ${state.players[0].money} €`;
+
+        let html = '';
+        if (tile.type === 'street') {
+            html = `
+                <div class="deed-row"><span>Miete (unbebaut)</span><strong>${tile.rent[0]} €</strong></div>
+                <div class="deed-row"><span>Mit 1 Haus</span><strong>${tile.rent[1]} €</strong></div>
+                <div class="deed-row"><span>Mit 2 Häusern</span><strong>${tile.rent[2]} €</strong></div>
+                <div class="deed-row"><span>Mit 3 Häusern</span><strong>${tile.rent[3]} €</strong></div>
+                <div class="deed-row"><span>Mit 4 Häusern</span><strong>${tile.rent[4]} €</strong></div>
+                <div class="deed-row"><span>Mit Hotel 🏨</span><strong>${tile.rent[5]} €</strong></div>
+                <div class="deed-row"><span>Hauspreis</span><strong>${tile.houseCost} €</strong></div>
+            `;
+        } else if (tile.type === 'railroad') {
+            html = `
+                <div class="deed-row"><span>1 Bahnhof</span><strong>25 €</strong></div>
+                <div class="deed-row"><span>2 Bahnhöfe</span><strong>50 €</strong></div>
+                <div class="deed-row"><span>3 Bahnhöfe</span><strong>100 €</strong></div>
+                <div class="deed-row"><span>4 Bahnhöfe</span><strong>200 €</strong></div>
+            `;
+        } else {
+            html = `<div class="deed-row"><span>1 Werk</span><strong>4× Würfelzahl</strong></div>
+                    <div class="deed-row"><span>2 Werke</span><strong>10× Würfelzahl</strong></div>`;
+        }
+        html += `<div class="deed-price-tag">Kaufpreis: ${tile.price} €</div>`;
+        document.getElementById('buy-details').innerHTML = html;
         dom.modalBuy.classList.remove('hidden');
     }
 
