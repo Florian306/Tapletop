@@ -21,6 +21,7 @@
         properties: {}, // tileId -> { ownerId, houses: 0..5, mortgaged: false }
         debts: [], // { fromId, toId, amount }
         marketEvent: MARKET_EVENTS[0],
+        etfPrice: 100,
         turnCount: 0,
         netWorthHistory: [],
         currentPlayer: 0,
@@ -250,11 +251,12 @@
     function startNewGame() {
         state = {
             players: [
-                { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, bankLoan: 0, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
+                { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, savings: 0, etfShares: 0, bankLoan: 0, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
             ],
             properties: {},
             debts: [],
             marketEvent: MARKET_EVENTS[0],
+            etfPrice: 100,
             turnCount: 0,
             netWorthHistory: [],
             currentPlayer: 0,
@@ -308,11 +310,12 @@
             return diceSum * (ownedUtils >= 2 ? 10 : 4);
         }
         const raw = prop.houses > 0 ? tile.rent[prop.houses] : (ownsFullGroup(prop.ownerId, tile.group) ? tile.rent[0] * 2 : tile.rent[0]);
-        return Math.max(1, Math.round(raw * (m.rentMult || 1)));
+        const renoMult = prop.renovated ? 1.5 : 1;
+        return Math.max(1, Math.round(raw * renoMult * (m.rentMult || 1)));
     }
 
     function calcNetWorth(p) {
-        let total = p.money - (p.bankLoan || 0);
+        let total = p.money + (p.savings || 0) + (p.etfShares || 0) * (state.etfPrice || 100) - (p.bankLoan || 0);
         const debtOut = (state.debts || []).filter(d => d.fromId === p.id).reduce((s, d) => s + d.amount, 0);
         total -= debtOut;
         MONO_BOARD.forEach(t => {
@@ -409,9 +412,11 @@
             myProps.forEach(tile => {
                 const prop = state.properties[tile.id];
                 const canBuild = isHumanTurn && tile.type === 'street' && !prop.mortgaged && ownsFullGroup(0, tile.group) && prop.houses < 5 && state.players[0].money >= tile.houseCost;
+                const renoCost = Math.floor(tile.price * 0.5);
+                const canRenovate = isHumanTurn && tile.type === 'street' && !prop.mortgaged && !prop.renovated && state.players[0].money >= renoCost;
                 const card = document.createElement('div');
                 card.className = 'mini-deed' + (prop.mortgaged ? ' is-mortgaged' : '');
-                const houseLabel = prop.houses === 5 ? '🏨' : (prop.houses > 0 ? '🏠'.repeat(prop.houses) : '');
+                const houseLabel = (prop.renovated ? '✨ ' : '') + (prop.houses === 5 ? '🏨' : (prop.houses > 0 ? '🏠'.repeat(prop.houses) : ''));
                 const currentRent = tile.type === 'street' ? `${calcRent(tile, 7)} €` : (tile.type === 'railroad' ? `${calcRent(tile, 7)} €` : '4–10×');
 
                 card.innerHTML = `
@@ -422,6 +427,7 @@
                     </div>
                     <div class="mini-deed-actions">
                         ${canBuild ? `<button class="prop-btn" data-build="${tile.id}">+🏠</button>` : ''}
+                        ${canRenovate ? `<button class="prop-btn" style="background:#ca8a04;" data-reno="${tile.id}" title="Renovieren (${renoCost} € -> +50% Miete)">✨</button>` : ''}
                         ${isHumanTurn && prop.houses === 0 ? `<button class="prop-btn mort" data-mort="${tile.id}">${prop.mortgaged ? 'Lösen' : 'Hyp.'}</button>` : ''}
                     </div>
                 `;
@@ -435,12 +441,29 @@
             dom.myProperties.querySelectorAll('[data-build]').forEach(btn => {
                 btn.addEventListener('click', () => buildHouse(0, parseInt(btn.dataset.build, 10)));
             });
+            dom.myProperties.querySelectorAll('[data-reno]').forEach(btn => {
+                btn.addEventListener('click', () => renovateStreet(0, parseInt(btn.dataset.reno, 10)));
+            });
             dom.myProperties.querySelectorAll('[data-mort]').forEach(btn => {
                 btn.addEventListener('click', () => toggleMortgage(0, parseInt(btn.dataset.mort, 10)));
             });
         }
 
         renderLogs();
+    }
+
+    function renovateStreet(playerId, tileId) {
+        const player = state.players[playerId];
+        const tile = MONO_BOARD[tileId];
+        const prop = state.properties[tileId];
+        const cost = Math.floor(tile.price * 0.5);
+        if (!prop || prop.ownerId !== playerId || prop.renovated || prop.mortgaged || player.money < cost) return;
+        player.money -= cost;
+        prop.renovated = true;
+        MonoSound.buy();
+        log(`✨ ${player.name} renoviert ${tile.name} für ${cost} € (+50% Miete)!`);
+        saveGame();
+        renderAll();
     }
 
     function buildHouse(playerId, tileId) {
@@ -557,6 +580,11 @@
                 MonoSound.money();
                 spawnCashPopup(0, '+200 €', true);
                 log(`${player.name} zieht über LOS (+200 €).`);
+                if (player.savings > 0) {
+                    const earned = Math.ceil(player.savings * 0.05);
+                    player.savings += earned;
+                    log(`💰 ${player.name} erhält +${earned} € Sparzinsen.`);
+                }
                 if (player.bankLoan > 0) {
                     const interest = Math.ceil(player.bankLoan * 0.1);
                     player.money -= interest;
@@ -920,11 +948,14 @@
         state.doublesCount = 0;
         state.turnCount = (state.turnCount || 0) + 1;
 
-        // Rotate dynamic market event every 6 turns
+        // Rotate dynamic market event every 6 turns & update ETF price
         if (state.turnCount % 6 === 0) {
             state.marketEvent = MARKET_EVENTS[Math.floor(Math.random() * MARKET_EVENTS.length)];
             log(`Breaking News: ${state.marketEvent.label}`);
         }
+        const mId = (state.marketEvent || MARKET_EVENTS[0]).id;
+        const delta = mId === 'boom' ? 8 : (mId === 'build' ? 5 : (mId === 'slump' ? -7 : Math.round(Math.random() * 10 - 5)));
+        state.etfPrice = Math.max(50, Math.min(280, (state.etfPrice || 100) + delta));
         recordNetWorthSnapshot();
 
         let safety = 0;
@@ -1150,18 +1181,83 @@
         dom.modalLeaderboard.classList.add('hidden');
     });
 
-    // Bank Loan Modal
+    // Bank Modal (Savings, ETF & Loans)
     function renderBankModal() {
         const p = state.players[0];
         if (!p) return;
         const loan = p.bankLoan || 0;
+        const savings = p.savings || 0;
+        const shares = p.etfShares || 0;
+        const price = state.etfPrice || 100;
+
         document.getElementById('bank-wallet').textContent = `${p.money} €`;
+        document.getElementById('bank-savings').textContent = `${savings} €`;
+        document.getElementById('etf-price').textContent = `${price} €`;
+        document.getElementById('etf-owned').textContent = `${shares} Anteile (${shares * price} €)`;
         document.getElementById('bank-loan').textContent = `${loan} €`;
-        document.getElementById('bank-interest').textContent = `${Math.ceil(loan * 0.1)} €`;
+
+        document.getElementById('btn-save-100').disabled = p.money < 100;
+        document.getElementById('btn-save-300').disabled = p.money < 300;
+        document.getElementById('btn-save-out').disabled = savings <= 0;
+        document.getElementById('btn-etf-buy').disabled = p.money < price;
+        document.getElementById('btn-etf-sell').disabled = shares <= 0;
         document.getElementById('btn-loan-300').disabled = loan + 300 > 1000;
         document.getElementById('btn-loan-500').disabled = loan + 500 > 1000;
-        document.getElementById('btn-loan-repay').disabled = loan <= 0 || p.money < Math.min(loan, 300);
+        document.getElementById('btn-loan-repay').disabled = loan <= 0 || p.money <= 0;
     }
+
+    [100, 300].forEach(amt => {
+        document.getElementById(`btn-save-${amt}`).addEventListener('click', () => {
+            const p = state.players[0];
+            if (p.money < amt) return;
+            p.money -= amt;
+            p.savings = (p.savings || 0) + amt;
+            MonoSound.money();
+            log(`💰 ${amt} € auf das Sparkonto eingezahlt.`);
+            saveGame();
+            renderBankModal();
+            renderAll();
+        });
+    });
+
+    document.getElementById('btn-save-out').addEventListener('click', () => {
+        const p = state.players[0];
+        if (!(p.savings > 0)) return;
+        const amt = p.savings;
+        p.money += amt;
+        p.savings = 0;
+        MonoSound.money();
+        log(`💰 ${amt} € vom Sparkonto abgehoben.`);
+        saveGame();
+        renderBankModal();
+        renderAll();
+    });
+
+    document.getElementById('btn-etf-buy').addEventListener('click', () => {
+        const p = state.players[0];
+        const price = state.etfPrice || 100;
+        if (p.money < price) return;
+        p.money -= price;
+        p.etfShares = (p.etfShares || 0) + 1;
+        MonoSound.buy();
+        log(`📈 1 Immobilien-ETF-Anteil für ${price} € gekauft.`);
+        saveGame();
+        renderBankModal();
+        renderAll();
+    });
+
+    document.getElementById('btn-etf-sell').addEventListener('click', () => {
+        const p = state.players[0];
+        const price = state.etfPrice || 100;
+        if (!(p.etfShares > 0)) return;
+        p.etfShares -= 1;
+        p.money += price;
+        MonoSound.money();
+        log(`📈 1 Immobilien-ETF-Anteil für ${price} € verkauft.`);
+        saveGame();
+        renderBankModal();
+        renderAll();
+    });
 
     document.getElementById('btn-bank').addEventListener('click', () => {
         renderBankModal();

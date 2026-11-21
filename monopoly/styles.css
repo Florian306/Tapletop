@@ -339,6 +339,28 @@ body {
     font-weight: 700;
 }
 
+.bank-section {
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.bank-sec-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.84rem;
+    margin-bottom: 8px;
+}
+
+.bank-sec-head span {
+    color: #ffd700;
+    font-weight: 800;
+}
+
 .jackpot-box strong { font-size: 1.15rem; color: #b45309; }
 
 .dice-area { display: flex; gap: 14px; font-size: 3rem; line-height: 1; }

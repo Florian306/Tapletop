@@ -240,20 +240,51 @@
         </div>
     </div>
 
-    <!-- Bank Loan Modal -->
+    <!-- Bank Modal (Savings Account, ETF Stocks & Loans) -->
     <div class="modal-backdrop hidden" id="modal-bank">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width:480px;">
             <div class="modal-badge">🏦 IMPERIUM BANK</div>
-            <p class="modal-desc">Nimm einen Kredit auf (max. 1.000 €). Bei jedem Zug über LOS werden 10% Zinsen fällig.</p>
-            <div class="pay-summary">
-                <div><small>Dein Geld</small><strong id="bank-wallet">0 €</strong></div>
-                <div><small>Offener Kredit</small><strong id="bank-loan">0 €</strong></div>
-                <div><small>Zinsen / LOS</small><strong id="bank-interest">0 €</strong></div>
+
+            <!-- Savings Account -->
+            <div class="bank-section">
+                <div class="bank-sec-head">
+                    <strong>💰 Sparkonto (+5% Zinsen / LOS)</strong>
+                    <span id="bank-savings">0 €</span>
+                </div>
+                <div class="auction-buttons">
+                    <button id="btn-save-100" class="cta-btn">+100 € ein</button>
+                    <button id="btn-save-300" class="cta-btn">+300 € ein</button>
+                    <button id="btn-save-out" class="cta-btn btn-secondary">Abheben</button>
+                </div>
             </div>
-            <div class="auction-buttons" style="margin-bottom:10px;">
-                <button id="btn-loan-300" class="cta-btn">+300 €</button>
-                <button id="btn-loan-500" class="cta-btn">+500 €</button>
-                <button id="btn-loan-repay" class="cta-btn btn-gold">Tilgen</button>
+
+            <!-- Real Estate ETF -->
+            <div class="bank-section">
+                <div class="bank-sec-head">
+                    <strong>📈 Immobilien-ETF (<span id="etf-price">100 €</span> / Anteil)</strong>
+                    <span id="etf-owned">0 Anteile</span>
+                </div>
+                <div class="auction-buttons" style="grid-template-columns:1fr 1fr;">
+                    <button id="btn-etf-buy" class="cta-btn">1 Anteil kaufen</button>
+                    <button id="btn-etf-sell" class="cta-btn btn-gold">1 Anteil verkaufen</button>
+                </div>
+            </div>
+
+            <!-- Bank Loan -->
+            <div class="bank-section">
+                <div class="bank-sec-head">
+                    <strong>💳 Kredit (10% Zinsen / LOS)</strong>
+                    <span id="bank-loan">0 €</span>
+                </div>
+                <div class="auction-buttons">
+                    <button id="btn-loan-300" class="cta-btn btn-warning">+300 €</button>
+                    <button id="btn-loan-500" class="cta-btn btn-warning">+500 €</button>
+                    <button id="btn-loan-repay" class="cta-btn btn-secondary">Tilgen</button>
+                </div>
+            </div>
+
+            <div style="font-size:0.82rem;color:#9eb3a8;margin-bottom:10px;">
+                Dein Bargeld: <strong id="bank-wallet" style="color:#ffd700;">0 €</strong>
             </div>
             <button id="btn-bank-close" class="cta-btn btn-secondary" style="width:100%;">Schließen</button>
         </div>
