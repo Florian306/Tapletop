@@ -359,29 +359,36 @@
             }
         });
 
-        // Human owned properties list
+        // Human owned properties as authentic mini title-deed cards
         const myProps = MONO_BOARD.filter(t => state.properties[t.id]?.ownerId === 0);
         if (!myProps.length) {
-            dom.myProperties.innerHTML = '<span class="muted">Noch keine Straßen gekauft.</span>';
+            dom.myProperties.innerHTML = '<span class="muted" style="grid-column:1/-1;">Noch keine Straßen gekauft.</span>';
         } else {
             dom.myProperties.innerHTML = '';
             myProps.forEach(tile => {
                 const prop = state.properties[tile.id];
                 const canBuild = isHumanTurn && tile.type === 'street' && !prop.mortgaged && ownsFullGroup(0, tile.group) && prop.houses < 5 && state.players[0].money >= tile.houseCost;
-                const item = document.createElement('div');
-                item.className = 'prop-item';
-                const houseLabel = prop.houses === 5 ? ' 🏨' : (prop.houses > 0 ? ` 🏠×${prop.houses}` : '');
-                item.innerHTML = `
-                    <div class="prop-left clickable-prop" data-inspect="${tile.id}">
-                        <span class="prop-swatch" style="background:${tile.color || '#555'}"></span>
-                        <span>${tile.name}${houseLabel}${prop.mortgaged ? ' (Hyp.)' : ''}</span>
+                const card = document.createElement('div');
+                card.className = 'mini-deed' + (prop.mortgaged ? ' is-mortgaged' : '');
+                const houseLabel = prop.houses === 5 ? '🏨' : (prop.houses > 0 ? '🏠'.repeat(prop.houses) : '');
+                const currentRent = tile.type === 'street' ? `${calcRent(tile, 7)} €` : (tile.type === 'railroad' ? `${calcRent(tile, 7)} €` : '4–10×');
+
+                card.innerHTML = `
+                    <div class="mini-deed-head" style="background:${tile.color || '#334155'}">${tile.name}</div>
+                    <div class="mini-deed-body">
+                        <span>${prop.mortgaged ? 'HYPOTHEK' : `Miete: ${currentRent}`}</span>
+                        ${houseLabel ? `<span>${houseLabel}</span>` : ''}
                     </div>
-                    <div class="prop-actions">
-                        ${canBuild ? `<button class="prop-btn" data-build="${tile.id}">+${tile.houseCost}€</button>` : ''}
+                    <div class="mini-deed-actions">
+                        ${canBuild ? `<button class="prop-btn" data-build="${tile.id}">+🏠</button>` : ''}
                         ${isHumanTurn && prop.houses === 0 ? `<button class="prop-btn mort" data-mort="${tile.id}">${prop.mortgaged ? 'Lösen' : 'Hyp.'}</button>` : ''}
                     </div>
                 `;
-                dom.myProperties.appendChild(item);
+                card.addEventListener('click', e => {
+                    if (e.target.closest('button')) return;
+                    openInspectModal(tile.id);
+                });
+                dom.myProperties.appendChild(card);
             });
 
             dom.myProperties.querySelectorAll('[data-build]').forEach(btn => {
@@ -389,9 +396,6 @@
             });
             dom.myProperties.querySelectorAll('[data-mort]').forEach(btn => {
                 btn.addEventListener('click', () => toggleMortgage(0, parseInt(btn.dataset.mort, 10)));
-            });
-            dom.myProperties.querySelectorAll('[data-inspect]').forEach(el => {
-                el.addEventListener('click', () => openInspectModal(parseInt(el.dataset.inspect, 10)));
             });
         }
 
@@ -530,6 +534,13 @@
             document.getElementById('go-desc').textContent = `${winner.token} ${winner.name} bleibt mit ${winner.money} € als einziger übrig.`;
             dom.modalGameover.classList.remove('hidden');
             try { localStorage.removeItem(SAVE_KEY); } catch {}
+
+            // Auto-submit score to Cloudflare D1 leaderboard
+            fetch('/api/leaderboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player_name: winner.isHuman ? 'Du' : winner.name, game: 'monopoly', score: winner.money })
+            }).catch(() => {});
         }
     }
 

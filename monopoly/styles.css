@@ -498,22 +498,76 @@ body {
 .player-row.active { border-color: #ffd700; background: rgba(255, 215, 0, 0.12); }
 .player-row.bankrupt { opacity: 0.4; text-decoration: line-through; }
 
-.prop-list { display: flex; flex-direction: column; gap: 5px; max-height: 150px; overflow-y: auto; }
-
-.prop-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    padding: 5px 8px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.28);
-    font-size: 0.78rem;
+.prop-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    max-height: 190px;
+    overflow-y: auto;
+    padding: 2px;
 }
 
-.prop-left { display: flex; align-items: center; gap: 6px; }
-.prop-swatch { width: 10px; height: 20px; border-radius: 3px; flex-shrink: 0; }
-.prop-actions { display: flex; gap: 4px; }
+.mini-deed {
+    position: relative;
+    background: #f8faf8;
+    color: #142019;
+    border: 1.5px solid #142019;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 82px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+    cursor: pointer;
+}
+
+.mini-deed:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    z-index: 4;
+}
+
+.mini-deed.is-mortgaged {
+    opacity: 0.55;
+    filter: grayscale(0.6);
+}
+
+.mini-deed-head {
+    padding: 4px 4px 3px;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 900;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    border-bottom: 1.5px solid #142019;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-deed-body {
+    padding: 4px;
+    text-align: center;
+    font-size: 0.66rem;
+    font-weight: 800;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mini-deed-actions {
+    display: flex;
+    gap: 2px;
+    padding: 0 3px 3px;
+}
+
+.mini-deed-actions .prop-btn {
+    flex: 1;
+    font-size: 0.62rem;
+    padding: 2px 3px;
+}
 
 .prop-btn {
     border: none;
