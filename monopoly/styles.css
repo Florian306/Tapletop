@@ -319,6 +319,26 @@ body {
     font-size: 0.78rem;
 }
 
+.market-ticker {
+    background: rgba(16, 36, 25, 0.85);
+    color: #fde047;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
 .jackpot-box strong { font-size: 1.15rem; color: #b45309; }
 
 .dice-area { display: flex; gap: 14px; font-size: 3rem; line-height: 1; }

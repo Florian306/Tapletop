@@ -8,10 +8,21 @@
         { name: 'Kira', token: '🦉', color: '#c084fc' }
     ];
 
+    const MARKET_EVENTS = [
+        { id: 'normal', label: '📰 Markt: Normale Konjunktur', rentMult: 1, houseMult: 1, railMult: 1 },
+        { id: 'boom', label: '📈 Immobilien-Boom: Mieten +25%!', rentMult: 1.25, houseMult: 1, railMult: 1 },
+        { id: 'build', label: '🏗️ Bauförderung: Häuser -20%!', rentMult: 1, houseMult: 0.8, railMult: 1 },
+        { id: 'rail', label: '🚂 Bahn-Hype: Bahnhöfe ×2 Miete!', rentMult: 1, houseMult: 1, railMult: 2 },
+        { id: 'slump', label: '📉 Markt-Flaute: Mieten -15%', rentMult: 0.85, houseMult: 1, railMult: 1 }
+    ];
+
     let state = {
         players: [],
         properties: {}, // tileId -> { ownerId, houses: 0..5, mortgaged: false }
         debts: [], // { fromId, toId, amount }
+        marketEvent: MARKET_EVENTS[0],
+        turnCount: 0,
+        netWorthHistory: [],
         currentPlayer: 0,
         jackpot: 0,
         hasRolled: false,
@@ -45,8 +56,14 @@
         modalPay: document.getElementById('modal-pay'),
         modalTrade: document.getElementById('modal-trade'),
         modalLeaderboard: document.getElementById('modal-leaderboard'),
+        modalBank: document.getElementById('modal-bank'),
+        modalBotOffer: document.getElementById('modal-bot-offer'),
+        modalChart: document.getElementById('modal-chart'),
+        marketTicker: document.getElementById('market-ticker'),
         modalGameover: document.getElementById('modal-gameover')
     };
+
+    let pendingBotOffer = null;
 
     function spawnCashPopup(tileId, text, isPlus = true) {
         const tileEl = document.getElementById(`tile-${tileId}`);
@@ -233,10 +250,13 @@
     function startNewGame() {
         state = {
             players: [
-                { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
+                { id: 0, name: 'Du', token: '🎩', color: '#22c55e', money: 1500, bankLoan: 0, pos: 0, inJail: false, jailTurns: 0, bankrupt: false, isHuman: true }
             ],
             properties: {},
             debts: [],
+            marketEvent: MARKET_EVENTS[0],
+            turnCount: 0,
+            netWorthHistory: [],
             currentPlayer: 0,
             jackpot: 0,
             hasRolled: false,
@@ -278,21 +298,42 @@
     function calcRent(tile, diceSum) {
         const prop = state.properties[tile.id];
         if (!prop || prop.mortgaged) return 0;
+        const m = state.marketEvent || MARKET_EVENTS[0];
         if (tile.type === 'railroad') {
             const ownedRails = MONO_BOARD.filter(t => t.type === 'railroad' && state.properties[t.id]?.ownerId === prop.ownerId && !state.properties[t.id]?.mortgaged).length;
-            return tile.rent[Math.max(0, ownedRails - 1)];
+            return Math.round(tile.rent[Math.max(0, ownedRails - 1)] * (m.railMult || 1));
         }
         if (tile.type === 'utility') {
             const ownedUtils = MONO_BOARD.filter(t => t.type === 'utility' && state.properties[t.id]?.ownerId === prop.ownerId && !state.properties[t.id]?.mortgaged).length;
             return diceSum * (ownedUtils >= 2 ? 10 : 4);
         }
-        if (prop.houses > 0) return tile.rent[prop.houses];
-        const base = tile.rent[0];
-        return ownsFullGroup(prop.ownerId, tile.group) ? base * 2 : base;
+        const raw = prop.houses > 0 ? tile.rent[prop.houses] : (ownsFullGroup(prop.ownerId, tile.group) ? tile.rent[0] * 2 : tile.rent[0]);
+        return Math.max(1, Math.round(raw * (m.rentMult || 1)));
+    }
+
+    function calcNetWorth(p) {
+        let total = p.money - (p.bankLoan || 0);
+        const debtOut = (state.debts || []).filter(d => d.fromId === p.id).reduce((s, d) => s + d.amount, 0);
+        total -= debtOut;
+        MONO_BOARD.forEach(t => {
+            const prop = state.properties[t.id];
+            if (prop && prop.ownerId === p.id) {
+                total += prop.mortgaged ? Math.floor(t.price / 2) : t.price;
+                if (prop.houses && t.houseCost) total += prop.houses * t.houseCost;
+            }
+        });
+        return total;
+    }
+
+    function recordNetWorthSnapshot() {
+        if (!state.netWorthHistory) state.netWorthHistory = [];
+        state.netWorthHistory.push(state.players.map(p => (p.bankrupt ? 0 : calcNetWorth(p))));
+        if (state.netWorthHistory.length > 40) state.netWorthHistory.shift();
     }
 
     function renderAll() {
         dom.jackpotAmount.textContent = `${state.jackpot} €`;
+        if (dom.marketTicker) dom.marketTicker.textContent = (state.marketEvent || MARKET_EVENTS[0]).label;
         dom.die1.textContent = DIE_FACES[state.lastDice[0] - 1];
         dom.die2.textContent = DIE_FACES[state.lastDice[1] - 1];
 
@@ -406,11 +447,12 @@
         const player = state.players[playerId];
         const tile = MONO_BOARD[tileId];
         const prop = state.properties[tileId];
-        if (!prop || prop.ownerId !== playerId || prop.houses >= 5 || player.money < tile.houseCost) return;
-        player.money -= tile.houseCost;
+        const cost = Math.round(tile.houseCost * ((state.marketEvent || MARKET_EVENTS[0]).houseMult || 1));
+        if (!prop || prop.ownerId !== playerId || prop.houses >= 5 || player.money < cost) return;
+        player.money -= cost;
         prop.houses += 1;
         MonoSound.buy();
-        log(`${player.name} baut ${prop.houses === 5 ? 'ein Hotel' : 'ein Haus'} auf ${tile.name}!`);
+        log(`${player.name} baut ${prop.houses === 5 ? 'ein Hotel' : 'ein Haus'} auf ${tile.name} (${cost} €)!`);
         saveGame();
         renderAll();
     }
@@ -515,6 +557,11 @@
                 MonoSound.money();
                 spawnCashPopup(0, '+200 €', true);
                 log(`${player.name} zieht über LOS (+200 €).`);
+                if (player.bankLoan > 0) {
+                    const interest = Math.ceil(player.bankLoan * 0.1);
+                    player.money -= interest;
+                    log(`🏦 ${player.name} zahlt ${interest} € Bankzinsen.`);
+                }
                 settleDebtsFor(player);
             }
             renderAll();
@@ -871,6 +918,14 @@
         if (state.gameOver) return;
         state.hasRolled = false;
         state.doublesCount = 0;
+        state.turnCount = (state.turnCount || 0) + 1;
+
+        // Rotate dynamic market event every 6 turns
+        if (state.turnCount % 6 === 0) {
+            state.marketEvent = MARKET_EVENTS[Math.floor(Math.random() * MARKET_EVENTS.length)];
+            log(`Breaking News: ${state.marketEvent.label}`);
+        }
+        recordNetWorthSnapshot();
 
         let safety = 0;
         do {
@@ -917,6 +972,23 @@
             await new Promise(r => setTimeout(r, 1100));
             await runBotTurn(bot);
             return;
+        }
+
+        // Occasionally bot makes a proactive trade offer to human
+        if (Math.random() < 0.2 && bot.money >= 350 && !state.players[0].bankrupt) {
+            const humanStreets = MONO_BOARD.filter(t => state.properties[t.id]?.ownerId === 0 && state.properties[t.id].houses === 0 && !state.properties[t.id].mortgaged);
+            if (humanStreets.length > 0) {
+                const target = humanStreets[Math.floor(Math.random() * humanStreets.length)];
+                const offer = Math.min(bot.money - 120, Math.round(target.price * (1.2 + Math.random() * 0.25)));
+                if (offer >= target.price) {
+                    await new Promise(resolve => {
+                        pendingBotOffer = { botId: bot.id, tileId: target.id, offer, resolve };
+                        document.getElementById('bot-offer-title').textContent = `🤝 Angebot von ${bot.token} ${bot.name}`;
+                        document.getElementById('bot-offer-desc').textContent = `${bot.name} bietet dir ${offer} € für ${target.name} (Wert: ${target.price} €). Deal?`;
+                        dom.modalBotOffer.classList.remove('hidden');
+                    });
+                }
+            }
         }
 
         await new Promise(r => setTimeout(r, 1450));
@@ -1077,6 +1149,113 @@
     document.getElementById('btn-lb-close').addEventListener('click', () => {
         dom.modalLeaderboard.classList.add('hidden');
     });
+
+    // Bank Loan Modal
+    function renderBankModal() {
+        const p = state.players[0];
+        if (!p) return;
+        const loan = p.bankLoan || 0;
+        document.getElementById('bank-wallet').textContent = `${p.money} €`;
+        document.getElementById('bank-loan').textContent = `${loan} €`;
+        document.getElementById('bank-interest').textContent = `${Math.ceil(loan * 0.1)} €`;
+        document.getElementById('btn-loan-300').disabled = loan + 300 > 1000;
+        document.getElementById('btn-loan-500').disabled = loan + 500 > 1000;
+        document.getElementById('btn-loan-repay').disabled = loan <= 0 || p.money < Math.min(loan, 300);
+    }
+
+    document.getElementById('btn-bank').addEventListener('click', () => {
+        renderBankModal();
+        dom.modalBank.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-bank-close').addEventListener('click', () => dom.modalBank.classList.add('hidden'));
+
+    [300, 500].forEach(amt => {
+        document.getElementById(`btn-loan-${amt}`).addEventListener('click', () => {
+            const p = state.players[0];
+            if ((p.bankLoan || 0) + amt > 1000) return;
+            p.bankLoan = (p.bankLoan || 0) + amt;
+            p.money += amt;
+            MonoSound.money();
+            log(`🏦 Du nimmst ${amt} € Bank-Kredit auf.`);
+            saveGame();
+            renderBankModal();
+            renderAll();
+        });
+    });
+
+    document.getElementById('btn-loan-repay').addEventListener('click', () => {
+        const p = state.players[0];
+        const repay = Math.min(p.bankLoan || 0, p.money);
+        if (repay <= 0) return;
+        p.money -= repay;
+        p.bankLoan -= repay;
+        MonoSound.buy();
+        log(`🏦 Du tilgst ${repay} € Bank-Kredit.`);
+        saveGame();
+        renderBankModal();
+        renderAll();
+    });
+
+    // Bot Trade Offer buttons
+    document.getElementById('btn-bot-offer-yes').addEventListener('click', () => {
+        if (!pendingBotOffer) return;
+        const { botId, tileId, offer, resolve } = pendingBotOffer;
+        pendingBotOffer = null;
+        dom.modalBotOffer.classList.add('hidden');
+        state.players[botId].money -= offer;
+        state.players[0].money += offer;
+        state.properties[tileId].ownerId = botId;
+        MonoSound.money();
+        log(`🤝 Deal! Du verkaufst ${MONO_BOARD[tileId].name} für ${offer} € an ${state.players[botId].name}!`);
+        saveGame();
+        renderAll();
+        resolve();
+    });
+
+    document.getElementById('btn-bot-offer-no').addEventListener('click', () => {
+        if (!pendingBotOffer) return;
+        const { botId, resolve } = pendingBotOffer;
+        pendingBotOffer = null;
+        dom.modalBotOffer.classList.add('hidden');
+        log(`Du lehnst das Angebot von ${state.players[botId].name} ab.`);
+        resolve();
+    });
+
+    // Net Worth Chart Modal
+    document.getElementById('btn-chart').addEventListener('click', () => {
+        dom.modalChart.classList.remove('hidden');
+        const canvas = document.getElementById('networth-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const hist = state.netWorthHistory && state.netWorthHistory.length > 1
+            ? state.netWorthHistory
+            : [state.players.map(calcNetWorth), state.players.map(calcNetWorth)];
+        const maxVal = Math.max(2000, ...hist.flat());
+        const pad = 22;
+        const w = canvas.width - pad * 2;
+        const h = canvas.height - pad * 2;
+
+        state.players.forEach((p, pIdx) => {
+            ctx.beginPath();
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = 3;
+            hist.forEach((snap, sIdx) => {
+                const x = pad + (sIdx / Math.max(1, hist.length - 1)) * w;
+                const y = canvas.height - pad - (Math.max(0, snap[pIdx] || 0) / maxVal) * h;
+                if (sIdx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        });
+
+        document.getElementById('chart-legend').innerHTML = state.players
+            .map(p => `<span style="color:${p.color}">${p.token} ${p.name}: ${calcNetWorth(p)} €</span>`)
+            .join('');
+    });
+
+    document.getElementById('btn-chart-close').addEventListener('click', () => dom.modalChart.classList.add('hidden'));
 
     // Trade Modal (Property + Cash Swap)
     document.getElementById('btn-open-trade').addEventListener('click', () => {

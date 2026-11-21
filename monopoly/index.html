@@ -16,6 +16,8 @@
                 <div id="turn-info" class="turn-pill">Bereit</div>
             </div>
             <div class="hud-right">
+                <button id="btn-bank" class="hud-btn" title="Bank-Kredit aufnehmen / zurückzahlen">🏦 Bank</button>
+                <button id="btn-chart" class="hud-btn" title="Live-Vermögensverlauf">📊 Chart</button>
                 <button id="btn-leaderboard" class="hud-btn" title="Globales Leaderboard">🏆 Rangliste</button>
                 <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
                 <button id="btn-new" class="hud-btn">Neues Spiel</button>
@@ -40,6 +42,7 @@
                         </div>
 
                         <div class="center-logo">MONOPOLY</div>
+                        <div class="market-ticker" id="market-ticker">📰 Markt: Normale Konjunktur</div>
                         <div class="jackpot-box">
                             <span>🅿️ Frei Parken Jackpot</span>
                             <strong id="jackpot-amount">0 €</strong>
@@ -234,6 +237,48 @@
             <p class="modal-desc">Top Monopoly-Vermögen aus deiner Cloudflare D1-Datenbank.</p>
             <div id="leaderboard-list" class="players-list" style="margin-bottom:16px;"></div>
             <button id="btn-lb-close" class="cta-btn btn-secondary">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Bank Loan Modal -->
+    <div class="modal-backdrop hidden" id="modal-bank">
+        <div class="modal-card">
+            <div class="modal-badge">🏦 IMPERIUM BANK</div>
+            <p class="modal-desc">Nimm einen Kredit auf (max. 1.000 €). Bei jedem Zug über LOS werden 10% Zinsen fällig.</p>
+            <div class="pay-summary">
+                <div><small>Dein Geld</small><strong id="bank-wallet">0 €</strong></div>
+                <div><small>Offener Kredit</small><strong id="bank-loan">0 €</strong></div>
+                <div><small>Zinsen / LOS</small><strong id="bank-interest">0 €</strong></div>
+            </div>
+            <div class="auction-buttons" style="margin-bottom:10px;">
+                <button id="btn-loan-300" class="cta-btn">+300 €</button>
+                <button id="btn-loan-500" class="cta-btn">+500 €</button>
+                <button id="btn-loan-repay" class="cta-btn btn-gold">Tilgen</button>
+            </div>
+            <button id="btn-bank-close" class="cta-btn btn-secondary" style="width:100%;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Incoming Bot Trade Offer Modal -->
+    <div class="modal-backdrop hidden" id="modal-bot-offer">
+        <div class="modal-card">
+            <div class="modal-badge" id="bot-offer-title">🤝 Angebot</div>
+            <p id="bot-offer-desc" class="modal-desc"></p>
+            <div class="modal-actions">
+                <button id="btn-bot-offer-yes" class="cta-btn">Deal annehmen</button>
+                <button id="btn-bot-offer-no" class="cta-btn btn-secondary">Ablehnen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Net Worth Live Chart Modal -->
+    <div class="modal-backdrop hidden" id="modal-chart">
+        <div class="modal-card" style="max-width:520px;">
+            <div class="modal-badge">📊 VERMÖGENSVERLAUF</div>
+            <p class="modal-desc">Nettovermögen (Bargeld + Straßen + Häuser − Schulden)</p>
+            <canvas id="networth-canvas" width="460" height="220" style="width:100%;background:rgba(0,0,0,0.35);border-radius:10px;margin-bottom:12px;"></canvas>
+            <div id="chart-legend" class="chart-legend"></div>
+            <button id="btn-chart-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Schließen</button>
         </div>
     </div>
 
