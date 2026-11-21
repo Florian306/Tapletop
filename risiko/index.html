@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISIKO — Global Domination</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Top War Room HUD -->
+        <header class="hud">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn">← Hub</a>
+                <div class="brand">RISIKO</div>
+                <div id="phase-pill" class="phase-pill">Phase: Verstärkung</div>
+                <div id="turn-pill" class="turn-pill">Du bist dran</div>
+            </div>
+            <div class="hud-right">
+                <button id="btn-mission" class="hud-btn" title="Deine geheime Mission">🎯 Mission</button>
+                <button id="btn-cards" class="hud-btn" title="Risiko-Karten eintauschen">🃏 Karten (<span id="card-count">0</span>)</button>
+                <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
+                <button id="btn-new" class="hud-btn">Neues Spiel</button>
+            </div>
+        </header>
+
+        <!-- Main War Room Layout -->
+        <main class="layout">
+            <!-- Interactive SVG World Map -->
+            <section class="map-wrap">
+                <svg id="world-map" viewBox="0 0 1100 580" class="world-map" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="ocean-grad" cx="50%" cy="45%" r="65%">
+                            <stop offset="0%" stop-color="#122b3a"/>
+                            <stop offset="100%" stop-color="#07131c"/>
+                        </radialGradient>
+                        <filter id="glow-gold">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#facc15" flood-opacity="0.9"/>
+                        </filter>
+                    </defs>
+                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grad)" rx="12"/>
+                    <g id="sea-routes"></g>
+                    <g id="territories-layer"></g>
+                    <g id="fx-svg-layer"></g>
+                </svg>
+
+                <!-- Bottom Action Bar over map -->
+                <div class="map-action-bar">
+                    <div id="instruction-text" class="instruction-text">Wähle ein eigenes Gebiet zur Verstärkung.</div>
+                    <div class="bar-buttons">
+                        <span id="reinforce-badge" class="reinforce-badge hidden">+3 Truppen verfügbar</span>
+                        <button id="btn-next-phase" class="cta-btn">Weiter → Angriff</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>Fraktionen</h3>
+                    <div id="players-list" class="players-list"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>Kontinent-Boni</h3>
+                    <div id="continents-list" class="continents-list"></div>
+                </div>
+
+                <div class="panel log-panel">
+                    <h3>Kriegsbericht</h3>
+                    <div id="battle-log" class="battle-log"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Start / Resume Modal -->
+    <div class="modal-backdrop" id="modal-start">
+        <div class="modal-card">
+            <div class="modal-badge">⚔️ RISIKO</div>
+            <h2>Global Domination</h2>
+            <p class="modal-desc">Erobere die Welt oder erfülle deine geheime Mission — mit Hauptstädten (+1 Verteidigung), Risiko-Karten und taktischen KI-Generälen.</p>
+
+            <div class="start-opts">
+                <label>Spielmodus</label>
+                <div class="segmented" id="opt-mode">
+                    <button data-val="world" class="active">Weltherrschaft</button>
+                    <button data-val="mission">🎯 Geheime Mission</button>
+                </div>
+
+                <label style="margin-top:10px;">KI-Generäle</label>
+                <div class="segmented" id="opt-bots">
+                    <button data-val="2">2 Bots</button>
+                    <button data-val="3" class="active">3 Bots</button>
+                    <button data-val="4">4 Bots</button>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-resume" class="cta-btn btn-gold hidden">💾 Gespeicherte Kampagne fortsetzen</button>
+                <button id="btn-start-game" class="cta-btn">Kampagne starten</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combat Modal -->
+    <div class="modal-backdrop hidden" id="modal-combat">
+        <div class="modal-card combat-modal">
+            <div class="modal-badge">⚔️ SCHLACHT</div>
+            <div class="combat-header">
+                <div class="combat-side atk-side">
+                    <small>ANGREIFER</small>
+                    <strong id="atk-name">—</strong>
+                    <span id="atk-troops" class="troop-pill">0</span>
+                </div>
+                <div class="combat-vs">
+                    <span>VS</span>
+                    <small id="win-chance">Siegchance: —%</small>
+                </div>
+                <div class="combat-side def-side">
+                    <small>VERTEIDIGER</small>
+                    <strong id="def-name">—</strong>
+                    <span id="def-troops" class="troop-pill">0</span>
+                </div>
+            </div>
+
+            <div class="dice-battle-row">
+                <div id="atk-dice" class="dice-group atk-dice"></div>
+                <div id="def-dice" class="dice-group def-dice"></div>
+            </div>
+
+            <p id="combat-result" class="modal-desc" style="margin:10px 0 14px;">Bereit zum Angriff!</p>
+
+            <div class="combat-actions">
+                <button id="btn-roll-once" class="cta-btn btn-danger">🎲 1× Angreifen</button>
+                <button id="btn-blitz" class="cta-btn btn-gold">⚡ Blitz-Angriff</button>
+                <button id="btn-retreat" class="cta-btn btn-secondary">Rückzug</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move Troops Modal (After Conquest or Fortify) -->
+    <div class="modal-backdrop hidden" id="modal-move">
+        <div class="modal-card">
+            <div class="modal-badge" id="move-title">🪖 Truppen verlegen</div>
+            <p id="move-desc" class="modal-desc"></p>
+            <div class="slider-row">
+                <input type="range" id="move-slider" min="1" max="1" value="1">
+                <strong id="move-val">1</strong>
+            </div>
+            <button id="btn-move-confirm" class="cta-btn" style="width:100%;margin-top:12px;">Bestätigen</button>
+        </div>
+    </div>
+
+    <!-- Risk Cards Modal -->
+    <div class="modal-backdrop hidden" id="modal-cards">
+        <div class="modal-card">
+            <div class="modal-badge">🃏 RISIKO-KARTEN</div>
+            <p class="modal-desc">Tausche 3 gleiche oder 3 verschiedene Symbole für Bonus-Truppen ein (nur in der Verstärkungs-Phase).</p>
+            <div id="cards-grid" class="cards-grid"></div>
+            <div class="modal-actions" style="margin-top:14px;">
+                <button id="btn-trade-cards" class="cta-btn" disabled>Set eintauschen (+4 Truppen)</button>
+                <button id="btn-cards-close" class="cta-btn btn-secondary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission / Game Over Modal -->
+    <div class="modal-backdrop hidden" id="modal-info">
+        <div class="modal-card">
+            <div class="modal-badge" id="info-icon">🎯</div>
+            <h2 id="info-title">Mission</h2>
+            <p id="info-desc" class="modal-desc"></p>
+            <button id="btn-info-close" class="cta-btn" style="width:100%;">Verstanden</button>
+        </div>
+    </div>
+
+    <script src="js/sound.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

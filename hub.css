@@ -96,6 +96,10 @@ body {
     background: linear-gradient(135deg, #1d7a4c 0%, #0f462c 55%, #141b18 100%);
 }
 
+.card-risiko .game-banner {
+    background: linear-gradient(135deg, #1d4ed8 0%, #0f2942 55%, #09131c 100%);
+}
+
 .card-soon .game-banner {
     background: linear-gradient(135deg, #272d38 0%, #15181f 100%);
     opacity: 0.7;
