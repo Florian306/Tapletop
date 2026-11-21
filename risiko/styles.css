@@ -99,8 +99,9 @@ body {
 }
 
 .territory-path {
-    stroke: #0b1620;
-    stroke-width: 2;
+    stroke: rgba(255, 255, 255, 0.35);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
     cursor: pointer;
     transition: filter 0.16s ease, stroke 0.16s ease, stroke-width 0.16s ease;
 }

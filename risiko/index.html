@@ -31,16 +31,35 @@
                 <svg id="world-map" viewBox="0 0 1100 580" class="world-map" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="ocean-grad" cx="50%" cy="45%" r="65%">
-                            <stop offset="0%" stop-color="#122b3a"/>
-                            <stop offset="100%" stop-color="#07131c"/>
+                            <stop offset="0%" stop-color="#14364a"/>
+                            <stop offset="65%" stop-color="#0a2030"/>
+                            <stop offset="100%" stop-color="#05111b"/>
                         </radialGradient>
+                        <pattern id="ocean-grid" width="55" height="55" patternUnits="userSpaceOnUse">
+                            <path d="M 55 0 L 0 0 0 55" fill="none" stroke="rgba(125, 211, 252, 0.07)" stroke-width="1"/>
+                        </pattern>
+                        <filter id="coast-glow" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.28"/>
+                            <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.55"/>
+                        </filter>
                         <filter id="glow-gold">
-                            <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#facc15" flood-opacity="0.9"/>
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#facc15" flood-opacity="0.95"/>
                         </filter>
                     </defs>
                     <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grad)" rx="12"/>
+                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grid)" rx="12"/>
+                    <!-- Decorative Compass Rose -->
+                    <g transform="translate(88, 498)" opacity="0.28" stroke="#7dd3fc" fill="none">
+                        <circle cx="0" cy="0" r="34" stroke-width="1.2" stroke-dasharray="3 3"/>
+                        <circle cx="0" cy="0" r="24" stroke-width="1"/>
+                        <polygon points="0,-32 6,-6 0,-12 -6,-6" fill="#7dd3fc"/>
+                        <polygon points="0,32 6,6 0,12 -6,6" fill="#38bdf8"/>
+                        <polygon points="32,0 6,6 12,0 6,-6" fill="#38bdf8"/>
+                        <polygon points="-32,0 -6,6 -12,0 -6,-6" fill="#38bdf8"/>
+                        <text x="0" y="-38" text-anchor="middle" font-size="9" font-weight="800" fill="#7dd3fc" stroke="none">N</text>
+                    </g>
                     <g id="sea-routes"></g>
-                    <g id="territories-layer"></g>
+                    <g id="territories-layer" filter="url(#coast-glow)"></g>
                     <g id="fx-svg-layer"></g>
                 </svg>
 
