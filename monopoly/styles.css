@@ -76,20 +76,75 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 0;
+    perspective: 1300px;
 }
 
 .board {
     position: relative;
-    width: min(89vh, 100%);
+    width: min(87vh, 100%);
     aspect-ratio: 1 / 1;
     display: grid;
     grid-template-columns: 1.4fr repeat(9, 1fr) 1.4fr;
     grid-template-rows: 1.4fr repeat(9, 1fr) 1.4fr;
     background: #1a2d23;
-    border: 5px solid #0e1d15;
-    border-radius: 10px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    border: 10px solid #3b2314;
+    outline: 2px solid rgba(212, 175, 55, 0.55);
+    border-radius: 12px;
+    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.78), 0 8px 0 #24140b, inset 0 0 0 2px rgba(255, 215, 0, 0.28);
     overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+    transform-style: preserve-3d;
+}
+
+.board.mode-3d {
+    transform: rotateX(19deg) scale(0.95);
+    box-shadow: 0 42px 80px rgba(0, 0, 0, 0.88), 0 14px 0 #24140b, 0 16px 0 rgba(212, 175, 55, 0.35);
+}
+
+/* Board Themes */
+body[data-btheme="dark"] {
+    --tile-bg: #1e293b;
+    --tile-text: #f1f5f9;
+}
+
+body[data-btheme="dark"] .tile.corner { background: #0f172a; }
+body[data-btheme="dark"] .tile-price { color: #94a3b8; }
+body[data-btheme="dark"] .board-center {
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    color: #f8fafc;
+}
+body[data-btheme="dark"] .jackpot-box { background: rgba(15, 23, 42, 0.8); color: #f8fafc; border-color: rgba(255, 255, 255, 0.16); }
+
+body[data-btheme="gold"] {
+    --tile-bg: #f6eedc;
+    --tile-text: #271c0c;
+}
+
+body[data-btheme="gold"] .tile.corner { background: #eadab8; }
+body[data-btheme="gold"] .board-center {
+    background: radial-gradient(circle at center, #f3e5c3 0%, #d9c08c 100%);
+    color: #271c0c;
+}
+
+/* 3D Plastic Houses & Hotels */
+.house-3d {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    border: 1px solid #052e16;
+    border-radius: 2px 2px 1px 1px;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.hotel-3d {
+    display: inline-block;
+    width: 15px;
+    height: 10px;
+    background: linear-gradient(135deg, #ef4444, #991b1b);
+    border: 1px solid #450a0a;
+    border-radius: 2px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 /* Authentic Directional Tiles */

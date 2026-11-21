@@ -402,10 +402,12 @@
                     tileEl.appendChild(dot);
                 }
                 if (barEl) {
-                    barEl.textContent = prop.houses === 5 ? '🏨' : '🏠'.repeat(prop.houses || 0);
+                    barEl.innerHTML = prop.houses === 5
+                        ? '<span class="hotel-3d" title="Hotel"></span>'
+                        : '<span class="house-3d" title="Haus"></span>'.repeat(prop.houses || 0);
                 }
             } else if (barEl) {
-                barEl.textContent = '';
+                barEl.innerHTML = '';
             }
         });
 
@@ -1628,6 +1630,20 @@
     document.getElementById('btn-start-new').addEventListener('click', startNewGame);
     document.getElementById('btn-go-new').addEventListener('click', startNewGame);
     document.getElementById('btn-new').addEventListener('click', () => dom.modalStart.classList.remove('hidden'));
+    // 3D Mode & Board Theme toggles
+    const BOARD_THEMES = ['mint', 'dark', 'gold'];
+    let bThemeIdx = 0;
+
+    document.getElementById('btn-3d').addEventListener('click', e => {
+        const is3d = dom.board.classList.toggle('mode-3d');
+        e.target.textContent = is3d ? '📐 2D' : '📐 3D';
+    });
+
+    document.getElementById('btn-board-theme').addEventListener('click', () => {
+        bThemeIdx = (bThemeIdx + 1) % BOARD_THEMES.length;
+        document.body.dataset.btheme = BOARD_THEMES[bThemeIdx];
+    });
+
     document.getElementById('btn-sound').addEventListener('click', e => {
         e.target.textContent = MonoSound.toggle() ? '🔊' : '🔇';
     });
