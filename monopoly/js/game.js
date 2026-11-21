@@ -22,6 +22,7 @@
         debts: [], // { fromId, toId, amount }
         marketEvent: MARKET_EVENTS[0],
         etfPrice: 100,
+        etfHistory: [100, 102, 98, 100],
         turnCount: 0,
         netWorthHistory: [],
         currentPlayer: 0,
@@ -1016,6 +1017,9 @@
         const mId = (state.marketEvent || MARKET_EVENTS[0]).id;
         const delta = mId === 'boom' ? 8 : (mId === 'build' ? 5 : (mId === 'slump' ? -7 : Math.round(Math.random() * 10 - 5)));
         state.etfPrice = Math.max(50, Math.min(280, (state.etfPrice || 100) + delta));
+        if (!state.etfHistory) state.etfHistory = [100];
+        state.etfHistory.push(state.etfPrice);
+        if (state.etfHistory.length > 24) state.etfHistory.shift();
         recordNetWorthSnapshot();
 
         let safety = 0;
@@ -1264,7 +1268,7 @@
         dom.modalLeaderboard.classList.add('hidden');
     });
 
-    // Bank Modal (Savings, ETF & Loans)
+    // Bank Modal (Black Card, Savings, Live ETF Sparkline & Loans)
     function renderBankModal() {
         const p = state.players[0];
         if (!p) return;
@@ -1272,12 +1276,38 @@
         const savings = p.savings || 0;
         const shares = p.etfShares || 0;
         const price = state.etfPrice || 100;
+        const nw = calcNetWorth(p);
+        const rating = loan === 0 && nw >= 2000 ? 'AAA' : (loan <= 300 ? 'AA' : (loan <= 600 ? 'A' : 'B'));
 
+        document.getElementById('bc-holder').textContent = (p.name || 'DU').toUpperCase();
+        document.getElementById('bank-networth').textContent = `${nw.toLocaleString('de-DE')} €`;
+        document.getElementById('bank-rating').textContent = rating;
         document.getElementById('bank-wallet').textContent = `${p.money} €`;
         document.getElementById('bank-savings').textContent = `${savings} €`;
         document.getElementById('etf-price').textContent = `${price} €`;
         document.getElementById('etf-owned').textContent = `${shares} Anteile (${shares * price} €)`;
         document.getElementById('bank-loan').textContent = `${loan} €`;
+
+        // Draw ETF sparkline
+        const canvas = document.getElementById('etf-sparkline');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const hist = state.etfHistory && state.etfHistory.length > 1 ? state.etfHistory : [100, price];
+            const minV = Math.min(...hist) - 8;
+            const maxV = Math.max(...hist) + 8;
+            const up = hist[hist.length - 1] >= hist[0];
+            ctx.beginPath();
+            ctx.strokeStyle = up ? '#22c55e' : '#ef4444';
+            ctx.lineWidth = 2.5;
+            hist.forEach((v, i) => {
+                const x = 8 + (i / Math.max(1, hist.length - 1)) * (canvas.width - 16);
+                const y = canvas.height - 8 - ((v - minV) / Math.max(1, maxV - minV)) * (canvas.height - 16);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
 
         document.getElementById('btn-save-100').disabled = p.money < 100;
         document.getElementById('btn-save-300').disabled = p.money < 300;

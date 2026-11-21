@@ -254,40 +254,56 @@
         </div>
     </div>
 
-    <!-- Bank Modal (Savings Account, ETF Stocks & Loans) -->
+    <!-- Bank Modal (Black Card, Savings, Live ETF Sparkline & Loans) -->
     <div class="modal-backdrop hidden" id="modal-bank">
-        <div class="modal-card" style="max-width:480px;">
-            <div class="modal-badge">🏦 IMPERIUM BANK</div>
+        <div class="modal-card bank-app-modal">
+            <!-- Virtual Black Card -->
+            <div class="black-card">
+                <div class="bc-top">
+                    <span class="bc-brand">IMPERIUM BANK</span>
+                    <span class="bc-rating" id="bank-rating">AAA</span>
+                </div>
+                <div class="bc-chip"></div>
+                <div class="bc-balance">
+                    <small>GESAMTVERMÖGEN</small>
+                    <strong id="bank-networth">1.500 €</strong>
+                </div>
+                <div class="bc-bottom">
+                    <span id="bc-holder">DU</span>
+                    <span>BAR: <strong id="bank-wallet">0 €</strong></span>
+                </div>
+            </div>
 
             <!-- Savings Account -->
             <div class="bank-section">
                 <div class="bank-sec-head">
-                    <strong>💰 Sparkonto (+5% Zinsen / LOS)</strong>
+                    <strong>💰 Sparkonto (+5% / LOS)</strong>
                     <span id="bank-savings">0 €</span>
                 </div>
                 <div class="auction-buttons">
-                    <button id="btn-save-100" class="cta-btn">+100 € ein</button>
-                    <button id="btn-save-300" class="cta-btn">+300 € ein</button>
+                    <button id="btn-save-100" class="cta-btn">+100 €</button>
+                    <button id="btn-save-300" class="cta-btn">+300 €</button>
                     <button id="btn-save-out" class="cta-btn btn-secondary">Abheben</button>
                 </div>
             </div>
 
-            <!-- Real Estate ETF -->
+            <!-- Real Estate ETF + Sparkline -->
             <div class="bank-section">
                 <div class="bank-sec-head">
-                    <strong>📈 Immobilien-ETF (<span id="etf-price">100 €</span> / Anteil)</strong>
+                    <strong>📈 Immobilien-ETF (<span id="etf-price">100 €</span>)</strong>
                     <span id="etf-owned">0 Anteile</span>
                 </div>
+                <canvas id="etf-sparkline" width="400" height="54" class="etf-sparkline"></canvas>
                 <div class="auction-buttons" style="grid-template-columns:1fr 1fr;">
-                    <button id="btn-etf-buy" class="cta-btn">1 Anteil kaufen</button>
-                    <button id="btn-etf-sell" class="cta-btn btn-gold">1 Anteil verkaufen</button>
+                    <button id="btn-etf-buy" class="cta-btn">Kaufen</button>
+                    <button id="btn-etf-sell" class="cta-btn btn-gold">Verkaufen</button>
                 </div>
             </div>
 
             <!-- Bank Loan -->
             <div class="bank-section">
                 <div class="bank-sec-head">
-                    <strong>💳 Kredit (10% Zinsen / LOS)</strong>
+                    <strong>💳 Kredit (10% / LOS)</strong>
                     <span id="bank-loan">0 €</span>
                 </div>
                 <div class="auction-buttons">
@@ -297,9 +313,6 @@
                 </div>
             </div>
 
-            <div style="font-size:0.82rem;color:#9eb3a8;margin-bottom:10px;">
-                Dein Bargeld: <strong id="bank-wallet" style="color:#ffd700;">0 €</strong>
-            </div>
             <button id="btn-bank-close" class="cta-btn btn-secondary" style="width:100%;">Schließen</button>
         </div>
     </div>
