@@ -38,12 +38,73 @@
         btnResumeSave: document.getElementById('btn-resume-save'),
         modalBuy: document.getElementById('modal-buy'),
         modalCard: document.getElementById('modal-card'),
+        modalPay: document.getElementById('modal-pay'),
         modalTrade: document.getElementById('modal-trade'),
         modalGameover: document.getElementById('modal-gameover')
     };
 
     let pendingBuyTile = null;
     let pendingCardResolve = null;
+    let pendingPay = null;
+
+    function getDenomBreakdown(amount) {
+        const denoms = [500, 100, 50, 20, 10, 5, 1];
+        let rem = Math.max(0, amount);
+        const map = {};
+        for (const d of denoms) {
+            map[d] = Math.floor(rem / d);
+            rem -= map[d] * d;
+        }
+        return map;
+    }
+
+    function openPayModal(reason, dueAmount) {
+        return new Promise(resolve => {
+            const human = state.players[0];
+            if (!human || human.money < dueAmount) {
+                resolve(true);
+                return;
+            }
+            const available = getDenomBreakdown(human.money);
+            const selected = { 500: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 1: 0 };
+            pendingPay = { due: dueAmount, available, selected, resolve };
+
+            document.getElementById('pay-reason').textContent = reason;
+            document.getElementById('pay-due').textContent = `${dueAmount} €`;
+            renderPayModal();
+            dom.modalPay.classList.remove('hidden');
+        });
+    }
+
+    function renderPayModal() {
+        if (!pendingPay) return;
+        const { due, available, selected } = pendingPay;
+        const denoms = [500, 100, 50, 20, 10, 5, 1];
+        const given = denoms.reduce((s, d) => s + d * selected[d], 0);
+        const change = Math.max(0, given - due);
+
+        document.getElementById('pay-given').textContent = `${given} €`;
+        document.getElementById('pay-change').textContent = `${change} €`;
+        document.getElementById('btn-pay-confirm').disabled = given < due;
+
+        const grid = document.getElementById('pay-bills-grid');
+        grid.innerHTML = '';
+        denoms.forEach(d => {
+            const left = available[d] - selected[d];
+            const btn = document.createElement('button');
+            btn.className = `banknote bill-${d} pay-bill-btn`;
+            btn.disabled = left <= 0;
+            btn.innerHTML = `+${d} €<span class="bill-count">${left} übrig</span>`;
+            btn.addEventListener('click', () => {
+                if (available[d] - selected[d] > 0) {
+                    selected[d]++;
+                    MonoSound.money();
+                    renderPayModal();
+                }
+            });
+            grid.appendChild(btn);
+        });
+    }
 
     function getGridPos(id) {
         if (id <= 10) return { row: 11, col: 11 - id };
@@ -467,6 +528,9 @@
         }
 
         if (tile.type === 'tax') {
+            if (player.isHuman && player.money >= tile.amount) {
+                await openPayModal(`${tile.name} an die Bank`, tile.amount);
+            }
             chargePlayer(player, tile.amount, null);
             log(`${player.name} zahlt ${tile.amount} € ${tile.name} (geht in den Jackpot).`);
             return;
@@ -476,7 +540,7 @@
             const deck = tile.type === 'chance' ? CHANCE_CARDS : COMMUNITY_CARDS;
             const card = deck[Math.floor(Math.random() * deck.length)];
             if (player.isHuman) {
-                await showCardPopup(tile.type === 'chance' ? 'Ereignisfeld' : 'Gemeinschaftsfeld', card.text);
+                await showCardPopup(tile.type, card.text);
             } else {
                 log(`${player.name} zieht Karte: "${card.text}"`);
             }
@@ -500,6 +564,9 @@
             } else if (prop.ownerId !== player.id && !prop.mortgaged) {
                 const rent = calcRent(tile, diceSum);
                 const owner = state.players[prop.ownerId];
+                if (player.isHuman && player.money >= rent) {
+                    await openPayModal(`Miete für ${tile.name} an ${owner.name}`, rent);
+                }
                 chargePlayer(player, rent, owner.id);
                 MonoSound.money();
                 log(`${player.name} zahlt ${rent} € Miete an ${owner.name} (${tile.name}).`);
@@ -507,9 +574,13 @@
         }
     }
 
-    function showCardPopup(title, text) {
+    function showCardPopup(cardType, text) {
         return new Promise(resolve => {
-            document.getElementById('card-type-badge').textContent = title;
+            const box = document.getElementById('event-card-box');
+            const isChance = cardType === 'chance';
+            box.className = `modal-card monopoly-event-card ${isChance ? 'card-chance' : 'card-community'}`;
+            document.getElementById('card-icon').textContent = isChance ? '❓' : '📦';
+            document.getElementById('card-type-badge').textContent = isChance ? 'EREIGNISFELD' : 'GEMEINSCHAFTSFELD';
             document.getElementById('card-text').textContent = text;
             dom.modalCard.classList.remove('hidden');
             pendingCardResolve = resolve;
@@ -665,17 +736,58 @@
         renderAll();
     });
 
-    document.getElementById('btn-buy-yes').addEventListener('click', () => {
+    document.getElementById('btn-buy-yes').addEventListener('click', async () => {
         if (!pendingBuyTile) return;
-        const p = state.players[0];
-        p.money -= pendingBuyTile.price;
-        state.properties[pendingBuyTile.id] = { ownerId: 0, houses: 0, mortgaged: false };
-        MonoSound.buy();
-        log(`Du kaufst ${pendingBuyTile.name} für ${pendingBuyTile.price} €!`);
+        const tile = pendingBuyTile;
         pendingBuyTile = null;
         dom.modalBuy.classList.add('hidden');
+
+        await openPayModal(`Kaufpreis für ${tile.name}`, tile.price);
+        const p = state.players[0];
+        p.money -= tile.price;
+        state.properties[tile.id] = { ownerId: 0, houses: 0, mortgaged: false };
+        MonoSound.buy();
+        log(`Du kaufst ${tile.name} für ${tile.price} €!`);
         saveGame();
         renderAll();
+    });
+
+    document.getElementById('btn-pay-reset').addEventListener('click', () => {
+        if (!pendingPay) return;
+        Object.keys(pendingPay.selected).forEach(k => { pendingPay.selected[k] = 0; });
+        renderPayModal();
+    });
+
+    document.getElementById('btn-pay-exact').addEventListener('click', () => {
+        if (!pendingPay) return;
+        const { due, available, selected } = pendingPay;
+        Object.keys(selected).forEach(k => { selected[k] = 0; });
+        const denoms = [500, 100, 50, 20, 10, 5, 1];
+        let rem = due;
+        for (const d of denoms) {
+            const take = Math.min(available[d], Math.floor(rem / d));
+            selected[d] = take;
+            rem -= take * d;
+        }
+        if (rem > 0) {
+            // Pick smallest available bill to cover remainder (bank gives change)
+            for (const d of [...denoms].reverse()) {
+                if (available[d] - selected[d] > 0) {
+                    selected[d]++;
+                    break;
+                }
+            }
+        }
+        renderPayModal();
+    });
+
+    document.getElementById('btn-pay-confirm').addEventListener('click', () => {
+        if (!pendingPay) return;
+        const resolve = pendingPay.resolve;
+        pendingPay = null;
+        dom.modalPay.classList.add('hidden');
+        MonoSound.buy();
+        resolve(true);
     });
 
     document.getElementById('btn-buy-no').addEventListener('click', () => {
