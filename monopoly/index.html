@@ -126,8 +126,44 @@
             <div id="buy-details" class="deed-body"></div>
             <div class="modal-actions">
                 <button id="btn-buy-yes" class="cta-btn">Kaufen</button>
-                <button id="btn-buy-no" class="cta-btn btn-secondary">Nicht kaufen</button>
+                <button id="btn-buy-no" class="cta-btn btn-warning">🔨 Nicht kaufen (Versteigern)</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Inspect Property Modal (Clickable Deed Card) -->
+    <div class="modal-backdrop hidden" id="modal-inspect">
+        <div class="modal-card deed-card">
+            <div id="inspect-color-bar" class="deed-header">
+                <small id="inspect-owner-label">FREI</small>
+                <h2 id="inspect-title">Straße</h2>
+            </div>
+            <div id="inspect-details" class="deed-body"></div>
+            <div class="modal-actions" id="inspect-actions">
+                <button id="btn-inspect-close" class="cta-btn btn-secondary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Auction Modal -->
+    <div class="modal-backdrop hidden" id="modal-auction">
+        <div class="modal-card">
+            <div class="modal-badge">🔨 VERSTEIGERUNG</div>
+            <h2 id="auction-title">Straße</h2>
+            <p class="modal-desc" id="auction-status">Startgebot: 10 €</p>
+
+            <div class="pay-summary">
+                <div><small>Aktuelles Gebot</small><strong id="auction-bid">10 €</strong></div>
+                <div><small>Höchstbietender</small><strong id="auction-leader">—</strong></div>
+                <div><small>Dein Geld</small><strong id="auction-wallet">0 €</strong></div>
+            </div>
+
+            <div class="auction-buttons">
+                <button class="cta-btn" data-bid-inc="10">+10 €</button>
+                <button class="cta-btn" data-bid-inc="50">+50 €</button>
+                <button class="cta-btn" data-bid-inc="100">+100 €</button>
+            </div>
+            <button id="btn-auction-pass" class="cta-btn btn-secondary" style="margin-top:10px;width:100%;">Aussteigen</button>
         </div>
     </div>
 

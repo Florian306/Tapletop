@@ -37,6 +37,8 @@
         modalStart: document.getElementById('modal-start'),
         btnResumeSave: document.getElementById('btn-resume-save'),
         modalBuy: document.getElementById('modal-buy'),
+        modalInspect: document.getElementById('modal-inspect'),
+        modalAuction: document.getElementById('modal-auction'),
         modalCard: document.getElementById('modal-card'),
         modalPay: document.getElementById('modal-pay'),
         modalTrade: document.getElementById('modal-trade'),
@@ -46,6 +48,7 @@
     let pendingBuyTile = null;
     let pendingCardResolve = null;
     let pendingPay = null;
+    let activeAuction = null;
 
     function getDenomBreakdown(amount) {
         const denoms = [500, 100, 50, 20, 10, 5, 1];
@@ -115,15 +118,26 @@
 
     function getTileIcon(tile) {
         switch (tile.type) {
-            case 'go': return '🏁';
-            case 'jail': return '🚔';
-            case 'parking': return '🅿️';
-            case 'gotojail': return '👮';
-            case 'railroad': return '🚂';
-            case 'chance': return '❓';
-            case 'community': return '📦';
-            case 'tax': return '💎';
-            case 'utility': return tile.id === 12 ? '💡' : '🚰';
+            case 'go':
+                return `<svg viewBox="0 0 32 32"><path d="M26 16H8M8 16l7-7M8 16l7 7" stroke="#dc2626" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+            case 'jail':
+                return `<svg viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3" fill="#f97316" stroke="#1e293b" stroke-width="2"/><path d="M11 4v24M16 4v24M21 4v24" stroke="#1e293b" stroke-width="2.5"/></svg>`;
+            case 'parking':
+                return `<svg viewBox="0 0 32 32"><rect x="4" y="13" width="24" height="10" rx="3" fill="#dc2626"/><path d="M8 13l3-6h10l3 6" fill="#ef4444"/><circle cx="10" cy="24" r="3" fill="#1e293b"/><circle cx="22" cy="24" r="3" fill="#1e293b"/></svg>`;
+            case 'gotojail':
+                return `<svg viewBox="0 0 32 32"><circle cx="16" cy="14" r="8" fill="#2563eb"/><rect x="8" y="8" width="16" height="4" rx="2" fill="#1e3a8a"/><circle cx="16" cy="24" r="4" fill="#fbbf24"/></svg>`;
+            case 'railroad':
+                return `<svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="16" rx="3" fill="#1e293b"/><rect x="10" y="9" width="12" height="6" rx="1" fill="#93c5fd"/><circle cx="11" cy="24" r="2.5" fill="#475569"/><circle cx="21" cy="24" r="2.5" fill="#475569"/></svg>`;
+            case 'chance':
+                return `<svg viewBox="0 0 32 32"><text x="16" y="25" text-anchor="middle" font-size="24" font-weight="900" fill="#ea580c">?</text></svg>`;
+            case 'community':
+                return `<svg viewBox="0 0 32 32"><rect x="5" y="10" width="22" height="15" rx="3" fill="#2563eb"/><path d="M5 15h22" stroke="#93c5fd" stroke-width="2.5"/><rect x="13" y="13" width="6" height="5" rx="1" fill="#fbbf24"/></svg>`;
+            case 'tax':
+                return `<svg viewBox="0 0 32 32"><polygon points="16,4 28,14 16,28 4,14" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/></svg>`;
+            case 'utility':
+                return tile.id === 12
+                    ? `<svg viewBox="0 0 32 32"><circle cx="16" cy="13" r="7" fill="#facc15" stroke="#ca8a04" stroke-width="2"/><rect x="13" y="21" width="6" height="5" rx="1" fill="#475569"/></svg>`
+                    : `<svg viewBox="0 0 32 32"><path d="M16 4 C16 4 7 15 7 20 a9 9 0 0 0 18 0 C25 15 16 4 16 4 Z" fill="#0ea5e9" stroke="#0369a1" stroke-width="2"/></svg>`;
             default: return '';
         }
     }
@@ -160,6 +174,10 @@
             else if (tile.amount) inner += `<div class="tile-price">-${tile.amount} €</div>`;
             inner += `</div><div class="tokens-layer" id="tokens-${tile.id}"></div>`;
             el.innerHTML = inner;
+            if (['street', 'railroad', 'utility'].includes(tile.type)) {
+                el.classList.add('clickable-tile');
+                el.addEventListener('click', () => openInspectModal(tile.id));
+            }
             dom.board.appendChild(el);
         });
     }
@@ -330,7 +348,7 @@
                 item.className = 'prop-item';
                 const houseLabel = prop.houses === 5 ? ' 🏨' : (prop.houses > 0 ? ` 🏠×${prop.houses}` : '');
                 item.innerHTML = `
-                    <div class="prop-left">
+                    <div class="prop-left clickable-prop" data-inspect="${tile.id}">
                         <span class="prop-swatch" style="background:${tile.color || '#555'}"></span>
                         <span>${tile.name}${houseLabel}${prop.mortgaged ? ' (Hyp.)' : ''}</span>
                     </div>
@@ -347,6 +365,9 @@
             });
             dom.myProperties.querySelectorAll('[data-mort]').forEach(btn => {
                 btn.addEventListener('click', () => toggleMortgage(0, parseInt(btn.dataset.mort, 10)));
+            });
+            dom.myProperties.querySelectorAll('[data-inspect]').forEach(el => {
+                el.addEventListener('click', () => openInspectModal(parseInt(el.dataset.inspect, 10)));
             });
         }
 
@@ -626,14 +647,9 @@
             : '<span class="muted">Kein Bargeld</span>';
     }
 
-    function openBuyModal(tile) {
-        pendingBuyTile = tile;
-        document.getElementById('buy-color-bar').style.background = tile.color || '#334155';
-        document.getElementById('buy-title').textContent = tile.name;
-
-        let html = '';
+    function buildDeedDetailsHTML(tile) {
         if (tile.type === 'street') {
-            html = `
+            return `
                 <div class="deed-row"><span>Miete (unbebaut)</span><strong>${tile.rent[0]} €</strong></div>
                 <div class="deed-row"><span>Mit 1 Haus</span><strong>${tile.rent[1]} €</strong></div>
                 <div class="deed-row"><span>Mit 2 Häusern</span><strong>${tile.rent[2]} €</strong></div>
@@ -641,20 +657,119 @@
                 <div class="deed-row"><span>Mit 4 Häusern</span><strong>${tile.rent[4]} €</strong></div>
                 <div class="deed-row"><span>Mit Hotel 🏨</span><strong>${tile.rent[5]} €</strong></div>
                 <div class="deed-row"><span>Hauspreis</span><strong>${tile.houseCost} €</strong></div>
+                <div class="deed-row"><span>Hypothekenwert</span><strong>${Math.floor(tile.price / 2)} €</strong></div>
             `;
-        } else if (tile.type === 'railroad') {
-            html = `
+        }
+        if (tile.type === 'railroad') {
+            return `
                 <div class="deed-row"><span>1 Bahnhof</span><strong>25 €</strong></div>
                 <div class="deed-row"><span>2 Bahnhöfe</span><strong>50 €</strong></div>
                 <div class="deed-row"><span>3 Bahnhöfe</span><strong>100 €</strong></div>
                 <div class="deed-row"><span>4 Bahnhöfe</span><strong>200 €</strong></div>
+                <div class="deed-row"><span>Hypothekenwert</span><strong>100 €</strong></div>
             `;
-        } else {
-            html = `<div class="deed-row"><span>1 Werk</span><strong>4× Würfelzahl</strong></div>
-                    <div class="deed-row"><span>2 Werke</span><strong>10× Würfelzahl</strong></div>`;
         }
-        html += `<div class="deed-price-tag">Kaufpreis: ${tile.price} €</div>`;
-        document.getElementById('buy-details').innerHTML = html;
+        return `<div class="deed-row"><span>1 Werk</span><strong>4× Würfelzahl</strong></div>
+                <div class="deed-row"><span>2 Werke</span><strong>10× Würfelzahl</strong></div>
+                <div class="deed-row"><span>Hypothekenwert</span><strong>75 €</strong></div>`;
+    }
+
+    function openInspectModal(tileId) {
+        const tile = MONO_BOARD[tileId];
+        if (!tile) return;
+        const prop = state.properties[tileId];
+        const owner = prop ? state.players[prop.ownerId] : null;
+
+        document.getElementById('inspect-color-bar').style.background = tile.color || '#334155';
+        document.getElementById('inspect-owner-label').textContent = owner
+            ? `BESITZER: ${owner.token} ${owner.name.toUpperCase()}${prop.mortgaged ? ' (HYPOTHEK)' : ''}`
+            : `ZU VERKAUFEN · ${tile.price} €`;
+        document.getElementById('inspect-title').textContent = tile.name;
+        document.getElementById('inspect-details').innerHTML = buildDeedDetailsHTML(tile);
+        dom.modalInspect.classList.remove('hidden');
+    }
+
+    function startAuction(tile) {
+        const participants = state.players.filter(p => !p.bankrupt).map(p => ({
+            id: p.id,
+            passed: false,
+            maxBid: p.isHuman ? Infinity : Math.min(p.money - 80, Math.floor(tile.price * (0.75 + Math.random() * 0.5)))
+        }));
+        activeAuction = { tile, bid: 10, leaderId: null, participants };
+        document.getElementById('auction-title').textContent = `${tile.name} (Wert: ${tile.price} €)`;
+        dom.modalAuction.classList.remove('hidden');
+        renderAuction();
+        setTimeout(runBotAuctionBids, 700);
+    }
+
+    function renderAuction() {
+        if (!activeAuction) return;
+        const leader = activeAuction.leaderId !== null ? state.players[activeAuction.leaderId] : null;
+        document.getElementById('auction-bid').textContent = `${activeAuction.bid} €`;
+        document.getElementById('auction-leader').textContent = leader ? `${leader.token} ${leader.name}` : 'Niemand';
+        document.getElementById('auction-wallet').textContent = `${state.players[0].money} €`;
+        const humanPart = activeAuction.participants.find(p => p.id === 0);
+        document.querySelectorAll('[data-bid-inc]').forEach(btn => {
+            const inc = parseInt(btn.dataset.bidInc, 10);
+            btn.disabled = !humanPart || humanPart.passed || state.players[0].money < activeAuction.bid + inc;
+        });
+    }
+
+    function runBotAuctionBids() {
+        if (!activeAuction) return;
+        let someoneBid = false;
+        for (const p of activeAuction.participants) {
+            if (p.id === 0 || p.passed || p.id === activeAuction.leaderId) continue;
+            const nextBid = activeAuction.bid + 10;
+            if (nextBid <= p.maxBid && state.players[p.id].money >= nextBid) {
+                activeAuction.bid = nextBid;
+                activeAuction.leaderId = p.id;
+                someoneBid = true;
+                document.getElementById('auction-status').textContent = `${state.players[p.id].name} bietet ${nextBid} €!`;
+                MonoSound.money();
+                break;
+            } else {
+                p.passed = true;
+            }
+        }
+        renderAuction();
+        const remaining = activeAuction.participants.filter(p => !p.passed);
+        if (remaining.length <= 1 && activeAuction.leaderId !== null) {
+            finishAuction();
+        } else if (someoneBid) {
+            setTimeout(runBotAuctionBids, 750);
+        } else if (activeAuction.participants.find(p => p.id === 0)?.passed) {
+            finishAuction();
+        }
+    }
+
+    async function finishAuction() {
+        if (!activeAuction) return;
+        const { tile, bid, leaderId } = activeAuction;
+        activeAuction = null;
+        dom.modalAuction.classList.add('hidden');
+
+        if (leaderId === null) {
+            log(`🔨 Niemand hat auf ${tile.name} geboten.`);
+            return;
+        }
+        const winner = state.players[leaderId];
+        if (winner.isHuman) {
+            await openPayModal(`Auktions-Zuschlag für ${tile.name}`, bid);
+        }
+        winner.money -= bid;
+        state.properties[tile.id] = { ownerId: winner.id, houses: 0, mortgaged: false };
+        MonoSound.buy();
+        log(`🔨 Versteigert! ${winner.name} ersteigert ${tile.name} für ${bid} €!`);
+        saveGame();
+        renderAll();
+    }
+
+    function openBuyModal(tile) {
+        pendingBuyTile = tile;
+        document.getElementById('buy-color-bar').style.background = tile.color || '#334155';
+        document.getElementById('buy-title').textContent = tile.name;
+        document.getElementById('buy-details').innerHTML = buildDeedDetailsHTML(tile) + `<div class="deed-price-tag">Kaufpreis: ${tile.price} €</div>`;
         dom.modalBuy.classList.remove('hidden');
     }
 
@@ -791,8 +906,37 @@
     });
 
     document.getElementById('btn-buy-no').addEventListener('click', () => {
+        const tile = pendingBuyTile;
         pendingBuyTile = null;
         dom.modalBuy.classList.add('hidden');
+        if (tile) startAuction(tile);
+    });
+
+    document.getElementById('btn-inspect-close').addEventListener('click', () => {
+        dom.modalInspect.classList.add('hidden');
+    });
+
+    document.querySelectorAll('[data-bid-inc]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!activeAuction) return;
+            const inc = parseInt(btn.dataset.bidInc, 10);
+            const nextBid = activeAuction.bid + inc;
+            if (state.players[0].money < nextBid) return;
+            activeAuction.bid = nextBid;
+            activeAuction.leaderId = 0;
+            document.getElementById('auction-status').textContent = `Du bietest ${nextBid} €!`;
+            MonoSound.money();
+            renderAuction();
+            setTimeout(runBotAuctionBids, 650);
+        });
+    });
+
+    document.getElementById('btn-auction-pass').addEventListener('click', () => {
+        if (!activeAuction) return;
+        const humanPart = activeAuction.participants.find(p => p.id === 0);
+        if (humanPart) humanPart.passed = true;
+        renderAuction();
+        setTimeout(runBotAuctionBids, 400);
     });
 
     document.getElementById('btn-card-ok').addEventListener('click', () => {
