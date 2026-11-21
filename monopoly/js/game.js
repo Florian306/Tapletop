@@ -738,12 +738,23 @@
                 if (player.money >= tile.price) {
                     if (player.isHuman) {
                         openBuyModal(tile);
-                    } else if (player.money - tile.price >= 140) {
-                        player.money -= tile.price;
-                        state.properties[tile.id] = { ownerId: player.id, houses: 0, mortgaged: false };
-                        MonoSound.buy();
-                        log(`${player.name} kauft ${tile.name} für ${tile.price} €.`);
+                    } else {
+                        // Strategic bot decision: buy if it helps a color group or cheap, otherwise sometimes send to auction!
+                        const hasGroupMate = MONO_BOARD.some(t => t.group === tile.group && state.properties[t.id]?.ownerId === player.id);
+                        const wantsDirectBuy = hasGroupMate || (player.money - tile.price >= 260 && Math.random() < 0.65);
+                        if (wantsDirectBuy) {
+                            player.money -= tile.price;
+                            state.properties[tile.id] = { ownerId: player.id, houses: 0, mortgaged: false };
+                            MonoSound.buy();
+                            log(`${player.name} kauft ${tile.name} für ${tile.price} €.`);
+                        } else {
+                            log(`🔨 ${player.name} verzichtet auf ${tile.name} — Versteigerung startet!`);
+                            startAuction(tile);
+                        }
                     }
+                } else if (!player.isHuman) {
+                    log(`🔨 ${player.name} kann ${tile.name} nicht kaufen — Versteigerung!`);
+                    startAuction(tile);
                 }
             } else if (prop.ownerId !== player.id && !prop.mortgaged) {
                 const rent = calcRent(tile, diceSum);
@@ -989,14 +1000,30 @@
         await rollDice();
         if (state.gameOver || bot.bankrupt) return;
 
-        // Bot building logic
+        // Bot building, renovating & ETF investing logic
         const botStreets = MONO_BOARD.filter(t => t.type === 'street' && state.properties[t.id]?.ownerId === bot.id);
         for (const t of botStreets) {
             const prop = state.properties[t.id];
-            if (!prop.mortgaged && ownsFullGroup(bot.id, t.group) && prop.houses < 5 && bot.money - t.houseCost >= 250) {
+            if (!prop.mortgaged && ownsFullGroup(bot.id, t.group) && prop.houses < 5 && bot.money - t.houseCost >= 220) {
                 await new Promise(r => setTimeout(r, 750));
                 buildHouse(bot.id, t.id);
+            } else if (!prop.mortgaged && !prop.renovated && bot.money >= 550 && Math.random() < 0.25) {
+                await new Promise(r => setTimeout(r, 600));
+                renovateStreet(bot.id, t.id);
+                break;
             }
+        }
+
+        // Bot ETF trading on boom/slump
+        const etfP = state.etfPrice || 100;
+        if (bot.money >= 700 && etfP <= 105 && Math.random() < 0.35) {
+            bot.money -= etfP;
+            bot.etfShares = (bot.etfShares || 0) + 1;
+            log(`📈 ${bot.name} investiert in 1 Immobilien-ETF (${etfP} €).`);
+        } else if ((bot.etfShares || 0) > 0 && etfP >= 135) {
+            bot.etfShares -= 1;
+            bot.money += etfP;
+            log(`📈 ${bot.name} verkauft 1 ETF mit Gewinn (${etfP} €)!`);
         }
 
         if (!state.hasRolled && !bot.inJail) {
@@ -1005,17 +1032,24 @@
             return;
         }
 
-        // Occasionally bot makes a proactive trade offer to human
-        if (Math.random() < 0.2 && bot.money >= 350 && !state.players[0].bankrupt) {
+        // Wait if an auction is currently open before ending bot turn
+        while (activeAuction) {
+            await new Promise(r => setTimeout(r, 350));
+        }
+
+        // Aggressive bot trade offers (prioritizes completing a color group!)
+        if (Math.random() < 0.35 && bot.money >= 280 && !state.players[0].bankrupt) {
             const humanStreets = MONO_BOARD.filter(t => state.properties[t.id]?.ownerId === 0 && state.properties[t.id].houses === 0 && !state.properties[t.id].mortgaged);
             if (humanStreets.length > 0) {
-                const target = humanStreets[Math.floor(Math.random() * humanStreets.length)];
-                const offer = Math.min(bot.money - 120, Math.round(target.price * (1.2 + Math.random() * 0.25)));
+                const priority = humanStreets.find(t => MONO_BOARD.some(m => m.group === t.group && state.properties[m.id]?.ownerId === bot.id));
+                const target = priority || humanStreets[Math.floor(Math.random() * humanStreets.length)];
+                const mult = priority ? 1.45 : 1.25;
+                const offer = Math.min(bot.money - 100, Math.round(target.price * mult));
                 if (offer >= target.price) {
                     await new Promise(resolve => {
                         pendingBotOffer = { botId: bot.id, tileId: target.id, offer, resolve };
                         document.getElementById('bot-offer-title').textContent = `🤝 Angebot von ${bot.token} ${bot.name}`;
-                        document.getElementById('bot-offer-desc').textContent = `${bot.name} bietet dir ${offer} € für ${target.name} (Wert: ${target.price} €). Deal?`;
+                        document.getElementById('bot-offer-desc').textContent = `${bot.name} will ${target.name} unbedingt haben und bietet dir ${offer} € (Wert: ${target.price} €). Deal?`;
                         dom.modalBotOffer.classList.remove('hidden');
                     });
                 }
