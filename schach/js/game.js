@@ -508,6 +508,19 @@
                     sq.appendChild(span);
                 }
 
+                if (c === 0) {
+                    const rank = document.createElement('span');
+                    rank.className = 'coord-rank';
+                    rank.textContent = String(8 - r);
+                    sq.appendChild(rank);
+                }
+                if (r === 7) {
+                    const file = document.createElement('span');
+                    file.className = 'coord-file';
+                    file.textContent = FILES[c];
+                    sq.appendChild(file);
+                }
+
                 sq.addEventListener('click', () => handleSquareClick(r, c));
                 dom.board.appendChild(sq);
             }
