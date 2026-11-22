@@ -16,7 +16,7 @@ const RISK_TERRITORIES = [
     { id: 'groenland', name: 'Grönland', cont: 'na', lon: -42, lat: 72, adj: ['canada', 'nord_eu'] },
     { id: 'usa_west', name: 'USA West', cont: 'na', lon: -114, lat: 40, adj: ['canada', 'usa_ost', 'mexiko'] },
     { id: 'usa_ost', name: 'USA Ost', cont: 'na', lon: -84, lat: 38, adj: ['canada', 'usa_west', 'mexiko'] },
-    { id: 'mexiko', name: 'Mexiko', cont: 'na', lon: -100, lat: 21, adj: ['usa_west', 'usa_ost', 'kolumbien'] },
+    { id: 'mexiko', name: 'Neuspanien', cont: 'na', lon: -100, lat: 21, adj: ['usa_west', 'usa_ost', 'kolumbien'] },
 
     // South America (4)
     { id: 'kolumbien', name: 'Kolumbien', cont: 'sa', lon: -72, lat: 4, adj: ['mexiko', 'brasilien', 'peru'] },
@@ -27,9 +27,9 @@ const RISK_TERRITORIES = [
     // Europe (5)
     { id: 'nord_eu', name: 'Nordeuropa', cont: 'eu', lon: 15, lat: 62, adj: ['groenland', 'west_eu', 'mitteleuropa', 'russland'] },
     { id: 'west_eu', name: 'Westeuropa', cont: 'eu', lon: -2, lat: 46, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'westafrika'] },
-    { id: 'mitteleuropa', name: 'Mitteleuropa', cont: 'eu', lon: 16, lat: 51, adj: ['nord_eu', 'west_eu', 'sued_eu', 'russland'] },
-    { id: 'sued_eu', name: 'Südeuropa', cont: 'eu', lon: 17, lat: 42, adj: ['west_eu', 'mitteleuropa', 'russland', 'aegypten', 'nahost'] },
-    { id: 'russland', name: 'Russland', cont: 'eu', lon: 46, lat: 57, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'ural', 'nahost'] },
+    { id: 'mitteleuropa', name: 'Preußen', cont: 'eu', lon: 16, lat: 51, adj: ['nord_eu', 'west_eu', 'sued_eu', 'russland'] },
+    { id: 'sued_eu', name: 'Römisches Reich', cont: 'eu', lon: 17, lat: 42, adj: ['west_eu', 'mitteleuropa', 'russland', 'aegypten', 'nahost'] },
+    { id: 'russland', name: 'Zarenreich', cont: 'eu', lon: 46, lat: 57, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'ural', 'nahost'] },
 
     // Africa (4)
     { id: 'westafrika', name: 'Westafrika', cont: 'af', lon: 0, lat: 14, adj: ['brasilien', 'west_eu', 'aegypten', 'ostafrika', 'suedafrika'] },
@@ -41,10 +41,10 @@ const RISK_TERRITORIES = [
     { id: 'ural', name: 'Ural', cont: 'as', lon: 74, lat: 56, adj: ['russland', 'sibirien', 'china', 'nahost'] },
     { id: 'sibirien', name: 'Sibirien', cont: 'as', lon: 105, lat: 62, adj: ['ural', 'kamtschatka', 'china'] },
     { id: 'kamtschatka', name: 'Kamtschatka', cont: 'as', lon: 146, lat: 62, adj: ['sibirien', 'china', 'japan', 'alaska'] },
-    { id: 'nahost', name: 'Naher Osten', cont: 'as', lon: 48, lat: 28, adj: ['sued_eu', 'russland', 'ural', 'aegypten', 'ostafrika', 'indien'] },
-    { id: 'indien', name: 'Indien', cont: 'as', lon: 79, lat: 21, adj: ['nahost', 'china', 'indonesien'] },
-    { id: 'china', name: 'China', cont: 'as', lon: 105, lat: 34, adj: ['ural', 'sibirien', 'kamtschatka', 'indien', 'japan'] },
-    { id: 'japan', name: 'Japan', cont: 'as', lon: 138, lat: 36, adj: ['kamtschatka', 'china'] },
+    { id: 'nahost', name: 'Osmanisches Reich', cont: 'as', lon: 48, lat: 28, adj: ['sued_eu', 'russland', 'ural', 'aegypten', 'ostafrika', 'indien'] },
+    { id: 'indien', name: 'Britisch-Indien', cont: 'as', lon: 79, lat: 21, adj: ['nahost', 'china', 'indonesien'] },
+    { id: 'china', name: 'Qing-Reich', cont: 'as', lon: 105, lat: 34, adj: ['ural', 'sibirien', 'kamtschatka', 'indien', 'japan'] },
+    { id: 'japan', name: 'Shogunat Japan', cont: 'as', lon: 138, lat: 36, adj: ['kamtschatka', 'china'] },
 
     // Australia (2)
     { id: 'indonesien', name: 'Indonesien', cont: 'au', lon: 116, lat: -2, adj: ['indien', 'australien'] },

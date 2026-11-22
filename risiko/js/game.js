@@ -3,15 +3,16 @@
     const SAVE_KEY = 'risiko_domination_save_v1';
     const CARD_TYPES = ['🪖', '🐴', '💣'];
     const BOT_FACTIONS = [
-        { name: 'General Luna', color: '#f97316', avatar: '🦊' },
-        { name: 'Marshal Max', color: '#38bdf8', avatar: '🤖' },
-        { name: 'Kommandant Kira', color: '#c084fc', avatar: '🦉' },
-        { name: 'Admiral Rex', color: '#eab308', avatar: '🦖' }
+        { name: 'Napoleon', color: '#3b82f6', avatar: '⚜️' },
+        { name: 'Königin Victoria', color: '#ef4444', avatar: '🦁' },
+        { name: 'Zar Alexander', color: '#a855f7', avatar: '🦅' },
+        { name: 'Shogun Tokugawa', color: '#eab308', avatar: '⛩️' }
     ];
 
     let state = {
         players: [],
         board: {}, // id -> { ownerId, troops, isCapital }
+        year: 1815,
         currentPlayer: 0,
         phase: 'reinforce', // 'reinforce' | 'attack' | 'fortify'
         reinforcements: 0,
@@ -87,8 +88,9 @@
 
     function startNewGame() {
         state.players = [
-            { id: 0, name: 'Du', color: '#22c55e', avatar: '🎩', isHuman: true, cards: [], eliminated: false, missionId: null }
+            { id: 0, name: 'Dein Reich', color: '#22c55e', avatar: '👑', isHuman: true, cards: [], eliminated: false, missionId: null }
         ];
+        state.year = 1815;
         for (let i = 0; i < state.botCount; i++) {
             const f = BOT_FACTIONS[i];
             state.players.push({ id: i + 1, name: f.name, color: f.color, avatar: f.avatar, isHuman: false, cards: [], eliminated: false, missionId: null });
@@ -247,6 +249,8 @@
         const humanTurn = state.currentPlayer === 0 && !state.gameOver;
 
         const phaseLabels = { reinforce: '1. Verstärkung', attack: '2. Angriff', fortify: '3. Verlegen' };
+        const yearEl = document.getElementById('year-pill');
+        if (yearEl) yearEl.textContent = `Anno ${state.year || 1815}`;
         dom.phasePill.textContent = `Phase: ${phaseLabels[state.phase]}`;
         dom.turnPill.textContent = active ? `${active.avatar} ${active.name}` : '—';
         dom.cardCount.textContent = state.players[0]?.cards.length || 0;
@@ -490,6 +494,15 @@
             state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
             safety++;
         } while (state.players[state.currentPlayer].eliminated && safety < 10);
+
+        if (state.currentPlayer === 0) {
+            state.year = (state.year || 1815) + 1;
+            if (state.year % 5 === 0) {
+                log(`📜 Anno ${state.year}: Industrielle Mobilmachung — +2 Extra-Truppen für deine Hauptstadt!`);
+                const cap = Object.values(state.board).find(b => b.ownerId === 0 && b.isCapital);
+                if (cap) cap.troops += 2;
+            }
+        }
 
         state.phase = 'reinforce';
         state.reinforcements = calcReinforcements(state.currentPlayer);
