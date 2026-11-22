@@ -134,25 +134,34 @@
         const a = getTerr(fromId);
         const b = getTerr(toId);
         if (!a || !b) return;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', a.x);
-        line.setAttribute('y1', a.y);
-        line.setAttribute('x2', b.x);
-        line.setAttribute('y2', b.y);
-        line.setAttribute('stroke', '#facc15');
-        line.setAttribute('stroke-width', '3');
-        line.setAttribute('stroke-dasharray', '8 6');
-        dom.fxLayer.appendChild(line);
 
-        const boom = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        boom.setAttribute('cx', b.x);
-        boom.setAttribute('cy', b.y);
-        boom.setAttribute('r', '18');
-        boom.setAttribute('fill', '#ef4444');
-        boom.setAttribute('opacity', '0.85');
-        dom.fxLayer.appendChild(boom);
+        // Curved artillery arc
+        const mx = (a.x + b.x) / 2;
+        const my = Math.min(a.y, b.y) - 45;
+        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arc.setAttribute('d', `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`);
+        arc.setAttribute('fill', 'none');
+        arc.setAttribute('stroke', '#facc15');
+        arc.setAttribute('stroke-width', '3');
+        arc.setAttribute('stroke-dasharray', '8 5');
+        dom.fxLayer.appendChild(arc);
 
-        setTimeout(() => { line.remove(); boom.remove(); }, 420);
+        // Expanding shockwave ring
+        const wave = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        wave.setAttribute('cx', b.x);
+        wave.setAttribute('cy', b.y);
+        wave.setAttribute('r', '8');
+        wave.setAttribute('class', 'shockwave');
+        dom.fxLayer.appendChild(wave);
+
+        const appEl = document.querySelector('.app');
+        if (appEl) {
+            appEl.classList.remove('shake');
+            void appEl.offsetWidth;
+            appEl.classList.add('shake');
+        }
+
+        setTimeout(() => { arc.remove(); wave.remove(); }, 500);
     }
 
     function renderMap() {
@@ -644,6 +653,13 @@
     });
 
     document.getElementById('btn-info-close').addEventListener('click', () => dom.modalInfo.classList.add('hidden'));
+    const MAP_THEMES = ['warroom', 'antique', 'radar'];
+    let mThemeIdx = 0;
+    document.getElementById('btn-map-theme').addEventListener('click', () => {
+        mThemeIdx = (mThemeIdx + 1) % MAP_THEMES.length;
+        document.body.dataset.mtheme = MAP_THEMES[mThemeIdx];
+    });
+
     document.getElementById('btn-new').addEventListener('click', () => dom.modalStart.classList.remove('hidden'));
     document.getElementById('btn-sound').addEventListener('click', e => { e.target.textContent = RiskSound.toggle() ? '🔊' : '🔇'; });
 

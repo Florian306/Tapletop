@@ -91,11 +91,52 @@ body {
     background: #07131c;
 }
 
+.app.shake {
+    animation: warShake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes warShake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-5px, 3px); }
+    50% { transform: translate(5px, -3px); }
+    75% { transform: translate(-3px, -2px); }
+}
+
 .sea-line {
-    stroke: rgba(148, 197, 235, 0.35);
+    stroke: rgba(148, 197, 235, 0.42);
     stroke-width: 2;
     stroke-dasharray: 6 6;
     fill: none;
+    animation: seaFlow 18s linear infinite;
+}
+
+@keyframes seaFlow {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -120; }
+}
+
+/* Map Themes */
+body[data-mtheme="antique"] .world-map {
+    filter: sepia(0.55) contrast(1.06) brightness(0.95);
+    border-color: rgba(212, 175, 55, 0.55);
+}
+
+body[data-mtheme="radar"] .world-map {
+    filter: hue-rotate(85deg) saturate(1.25) contrast(1.1);
+    border-color: rgba(34, 197, 94, 0.55);
+}
+
+.shockwave {
+    fill: none;
+    stroke: #facc15;
+    stroke-width: 3;
+    animation: shockExpand 0.48s ease-out forwards;
+    transform-origin: center;
+}
+
+@keyframes shockExpand {
+    from { r: 6; opacity: 1; stroke-width: 4; }
+    to { r: 34; opacity: 0; stroke-width: 0.5; }
 }
 
 .territory-path {
