@@ -24,11 +24,11 @@ const RISK_TERRITORIES = [
     { id: 'peru', name: 'Peru', cont: 'sa', lon: -74, lat: -13, adj: ['kolumbien', 'brasilien', 'argentinien'] },
     { id: 'argentinien', name: 'Argentinien', cont: 'sa', lon: -65, lat: -36, adj: ['peru', 'brasilien'] },
 
-    // Europe (5)
-    { id: 'nord_eu', name: 'Nordeuropa', cont: 'eu', lon: 15, lat: 62, adj: ['groenland', 'west_eu', 'mitteleuropa', 'russland'] },
-    { id: 'west_eu', name: 'Westeuropa', cont: 'eu', lon: -2, lat: 46, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'westafrika'] },
-    { id: 'mitteleuropa', name: 'Preußen', cont: 'eu', lon: 16, lat: 51, adj: ['nord_eu', 'west_eu', 'sued_eu', 'russland'] },
-    { id: 'sued_eu', name: 'Römisches Reich', cont: 'eu', lon: 17, lat: 42, adj: ['west_eu', 'mitteleuropa', 'russland', 'aegypten', 'nahost'] },
+    // Europe (5) - spaced cleanly for readable labels
+    { id: 'nord_eu', name: 'Nordeuropa', cont: 'eu', lon: 14, lat: 64, adj: ['groenland', 'west_eu', 'mitteleuropa', 'russland'] },
+    { id: 'west_eu', name: 'Westeuropa', cont: 'eu', lon: -4, lat: 46, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'westafrika'] },
+    { id: 'mitteleuropa', name: 'Preußen', cont: 'eu', lon: 15, lat: 52, adj: ['nord_eu', 'west_eu', 'sued_eu', 'russland'] },
+    { id: 'sued_eu', name: 'Römisches Reich', cont: 'eu', lon: 18, lat: 40, adj: ['west_eu', 'mitteleuropa', 'russland', 'aegypten', 'nahost'] },
     { id: 'russland', name: 'Zarenreich', cont: 'eu', lon: 46, lat: 57, adj: ['nord_eu', 'mitteleuropa', 'sued_eu', 'ural', 'nahost'] },
 
     // Africa (4)

@@ -10,24 +10,28 @@
 
 <body>
     <div class="app">
-        <!-- Top War Room HUD -->
+        <!-- Floating AAA Strategy HUD -->
         <header class="hud">
-            <div class="hud-left">
-                <a href="../index.html" class="hud-btn">← Hub</a>
-                <div class="brand">RISIKO 1815</div>
-                <div id="year-pill" class="year-pill">Anno 1815</div>
-                <div id="phase-pill" class="phase-pill">Phase: Verstärkung</div>
-                <div id="turn-pill" class="turn-pill">Du bist dran</div>
+            <div class="hud-island hud-left">
+                <a href="../index.html" class="icon-btn" title="Zurück zum Spiele-Hub">← Hub</a>
+                <div class="brand">RISIKO <span>1815</span></div>
+                <div id="year-pill" class="meta-chip">Anno 1815</div>
+                <div class="meta-chip gold-chip">🪙 <strong id="gold-count">0</strong></div>
             </div>
-            <div class="hud-right">
-                <button id="btn-tech" class="hud-btn" title="Armee modernisieren">⚙️ Forschung (<span
-                        id="gold-count">0</span> 🪙)</button>
-                <button id="btn-map-theme" class="hud-btn" title="Karten-Stil wechseln">🎨 Karte</button>
-                <button id="btn-mission" class="hud-btn" title="Deine geheime Mission">🎯 Mission</button>
-                <button id="btn-cards" class="hud-btn" title="Risiko-Karten eintauschen">🃏 Karten (<span
-                        id="card-count">0</span>)</button>
-                <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
-                <button id="btn-new" class="hud-btn">Neues Spiel</button>
+
+            <div class="hud-island hud-center">
+                <span id="turn-pill" class="turn-name">👑 Dein Reich</span>
+                <span class="hud-divider">·</span>
+                <span id="phase-pill" class="phase-name">1. Verstärkung</span>
+            </div>
+
+            <div class="hud-island hud-right">
+                <button id="btn-tech" class="icon-btn" title="Armee-Modernisierung">⚙️ Forschung</button>
+                <button id="btn-cards" class="icon-btn" title="Risiko-Karten">🃏 <span id="card-count">0</span></button>
+                <button id="btn-mission" class="icon-btn" title="Geheime Mission">🎯</button>
+                <button id="btn-map-theme" class="icon-btn" title="Karten-Stil wechseln">🎨</button>
+                <button id="btn-sound" class="icon-btn" title="Sound an/aus">🔊</button>
+                <button id="btn-new" class="icon-btn" title="Neues Spiel">↻</button>
             </div>
         </header>
 
@@ -77,27 +81,31 @@
                 <div class="map-action-bar">
                     <div id="instruction-text" class="instruction-text">Wähle ein eigenes Gebiet zur Verstärkung.</div>
                     <div class="bar-buttons">
-                        <button id="btn-open-province" class="cta-btn btn-secondary hidden" title="Städte & Garnisonen dieses Landes verwalten">🔍 Städte</button>
+                        <button id="btn-open-province" class="cta-btn btn-secondary hidden"
+                            title="Städte & Garnisonen dieses Landes verwalten">🔍 Städte</button>
                         <span id="reinforce-badge" class="reinforce-badge hidden">+3 Truppen verfügbar</span>
                         <button id="btn-next-phase" class="cta-btn">Weiter → Angriff</button>
                     </div>
                 </div>
             </section>
 
-            <!-- Right Sidebar -->
+            <!-- Clean Tabbed Right Sidebar -->
             <aside class="sidebar">
-                <div class="panel">
-                    <h3>Fraktionen</h3>
+                <div class="sidebar-tabs" id="sidebar-tabs">
+                    <button class="tab-btn active" data-tab="players">👑 Reiche</button>
+                    <button class="tab-btn" data-tab="continents">🌍 Boni</button>
+                    <button class="tab-btn" data-tab="log">📜 Chronik</button>
+                </div>
+
+                <div class="tab-panel active" id="tab-players">
                     <div id="players-list" class="players-list"></div>
                 </div>
 
-                <div class="panel">
-                    <h3>Kontinent-Boni</h3>
+                <div class="tab-panel" id="tab-continents">
                     <div id="continents-list" class="continents-list"></div>
                 </div>
 
-                <div class="panel log-panel">
-                    <h3>Kriegsbericht</h3>
+                <div class="tab-panel" id="tab-log">
                     <div id="battle-log" class="battle-log"></div>
                 </div>
             </aside>
@@ -213,7 +221,8 @@
     <div class="modal-backdrop hidden" id="modal-province">
         <div class="modal-card" style="max-width:560px;">
             <div class="modal-badge" id="prov-title">🏰 Provinz-Ansicht</div>
-            <p class="modal-desc" id="prov-desc">Verteile deine Truppen taktisch auf die Städte und baue Mauern, Märkte oder Schmieden aus.</p>
+            <p class="modal-desc" id="prov-desc">Verteile deine Truppen taktisch auf die Städte und baue Mauern, Märkte
+                oder Schmieden aus.</p>
 
             <svg id="prov-svg" viewBox="0 0 480 185" class="prov-svg">
                 <defs>
@@ -248,7 +257,8 @@
             </svg>
 
             <div id="prov-cities-list" class="tech-list" style="margin-top:10px;"></div>
-            <button id="btn-prov-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Zurück zur Weltkarte</button>
+            <button id="btn-prov-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Zurück zur
+                Weltkarte</button>
         </div>
     </div>
 

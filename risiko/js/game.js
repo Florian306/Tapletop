@@ -857,6 +857,17 @@
     });
 
     document.getElementById('btn-info-close').addEventListener('click', () => dom.modalInfo.classList.add('hidden'));
+    // Sidebar Tabs
+    document.querySelectorAll('#sidebar-tabs .tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#sidebar-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            const target = document.getElementById(`tab-${btn.dataset.tab}`);
+            if (target) target.classList.add('active');
+        });
+    });
+
     const MAP_THEMES = ['warroom', 'antique', 'radar'];
     let mThemeIdx = 0;
     document.getElementById('btn-map-theme').addEventListener('click', () => {
