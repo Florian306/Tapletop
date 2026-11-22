@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kniffel — Tabletop Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="hud">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn">← Hub</a>
+                <div class="brand">🎲 KNIFFEL</div>
+                <div id="turn-pill" class="turn-pill">Du bist dran</div>
+            </div>
+            <div class="hud-right">
+                <button id="btn-mode" class="hud-btn">Modus: vs. Bot</button>
+                <button id="btn-new" class="hud-btn">Neues Spiel</button>
+            </div>
+        </header>
+
+        <main class="layout">
+            <!-- Dice Tray -->
+            <section class="dice-stage">
+                <div class="tray-card">
+                    <div class="rolls-left" id="rolls-left">Noch 3 Würfe</div>
+                    <div class="dice-row" id="dice-row"></div>
+                    <p class="tray-hint">Klicke auf einen Würfel, um ihn zu behalten 🔒</p>
+                    <button id="btn-roll" class="cta-btn">🎲 Würfeln</button>
+                </div>
+            </section>
+
+            <!-- Official Kniffel Score Sheet -->
+            <aside class="sheet-card">
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th>Kategorie</th>
+                            <th>Du</th>
+                            <th id="col-bot">🤖 Bot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score-body"></tbody>
+                </table>
+            </aside>
+        </main>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>

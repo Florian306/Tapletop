@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schach — Grandmaster Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-board="wood">
+    <div class="app">
+        <header class="hud">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn">← Hub</a>
+                <div class="brand">♟️ SCHACH</div>
+                <div id="status-pill" class="status-pill">Weiß ist am Zug</div>
+            </div>
+            <div class="hud-right">
+                <select id="difficulty-select" class="hud-select" title="KI-Stärke">
+                    <option value="1">KI: Leicht</option>
+                    <option value="2" selected>KI: Mittel</option>
+                    <option value="3">KI: Meister</option>
+                </select>
+                <button id="btn-theme" class="hud-btn" title="Brett-Stil wechseln">🎨 Brett</button>
+                <button id="btn-undo" class="hud-btn" title="Letzten Zug zurücknehmen">↩ Zurück</button>
+                <button id="btn-new" class="hud-btn">Neues Spiel</button>
+            </div>
+        </header>
+
+        <main class="layout">
+            <section class="board-stage">
+                <div id="chess-board" class="chess-board"></div>
+            </section>
+
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>Geschlagene Figuren</h3>
+                    <div class="captured-row"><span>Schwarz:</span><div id="cap-black" class="cap-pieces"></div></div>
+                    <div class="captured-row"><span>Weiß:</span><div id="cap-white" class="cap-pieces"></div></div>
+                </div>
+                <div class="panel log-panel">
+                    <h3>Zug-Protokoll</h3>
+                    <div id="move-history" class="move-history"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
