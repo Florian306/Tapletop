@@ -18,6 +18,7 @@
                 <div id="turn-pill" class="turn-pill">Du bist dran</div>
             </div>
             <div class="hud-right">
+                <button id="btn-tech" class="hud-btn" title="Armee modernisieren">⚙️ Forschung (<span id="gold-count">0</span> 🪙)</button>
                 <button id="btn-map-theme" class="hud-btn" title="Karten-Stil wechseln">🎨 Karte</button>
                 <button id="btn-mission" class="hud-btn" title="Deine geheime Mission">🎯 Mission</button>
                 <button id="btn-cards" class="hud-btn" title="Risiko-Karten eintauschen">🃏 Karten (<span id="card-count">0</span>)</button>
@@ -184,6 +185,16 @@
                 <button id="btn-trade-cards" class="cta-btn" disabled>Set eintauschen (+4 Truppen)</button>
                 <button id="btn-cards-close" class="cta-btn btn-secondary">Schließen</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Army Modernization / Tech Tree Modal -->
+    <div class="modal-backdrop hidden" id="modal-tech">
+        <div class="modal-card" style="max-width:480px;">
+            <div class="modal-badge">⚙️ ARMEE-MODERNISIERUNG</div>
+            <p class="modal-desc">Investiere deine Kriegskasse (<strong id="tech-gold" style="color:#fde047;">0 🪙</strong>) in moderne Militär-Technologien!</p>
+            <div id="tech-list" class="tech-list"></div>
+            <button id="btn-tech-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Schließen</button>
         </div>
     </div>
 

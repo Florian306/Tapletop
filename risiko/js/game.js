@@ -2,6 +2,12 @@
 (() => {
     const SAVE_KEY = 'risiko_domination_save_v1';
     const CARD_TYPES = ['🪖', '🐴', '💣'];
+    const TECH_UPGRADES = [
+        { id: 'artillery', icon: '💣', name: 'Schwere Artillerie', cost: 120, desc: '+1 auf deinen höchsten Angriffs-Würfel' },
+        { id: 'fortress', icon: '🛡️', name: 'Festungsbau', cost: 120, desc: '+1 auf deinen höchsten Verteidigungs-Würfel' },
+        { id: 'railway', icon: '🚂', name: 'Eisenbahn-Logistik', cost: 150, desc: '+2 Extra-Verstärkungstruppen jede Runde' },
+        { id: 'guard', icon: '⚔️', name: 'Moderne Garde', cost: 200, desc: 'Erstschlag: Gegner verliert 1 Truppe vor dem Kampf (bei >2)' }
+    ];
     const BOT_FACTIONS = [
         { name: 'Napoleon', color: '#3b82f6', avatar: '⚜️' },
         { name: 'Königin Victoria', color: '#ef4444', avatar: '🦁' },
@@ -44,6 +50,7 @@
         modalCombat: document.getElementById('modal-combat'),
         modalMove: document.getElementById('modal-move'),
         modalCards: document.getElementById('modal-cards'),
+        modalTech: document.getElementById('modal-tech'),
         modalInfo: document.getElementById('modal-info')
     };
 
@@ -83,17 +90,19 @@
         for (const [cid, cinfo] of Object.entries(RISK_CONTINENTS)) {
             if (ownsCont(state, pid, cid)) bonus += cinfo.bonus;
         }
+        const p = state.players[pid];
+        if (p?.techs?.includes('railway')) bonus += 2;
         return bonus;
     }
 
     function startNewGame() {
         state.players = [
-            { id: 0, name: 'Dein Reich', color: '#22c55e', avatar: '👑', isHuman: true, cards: [], eliminated: false, missionId: null }
+            { id: 0, name: 'Dein Reich', color: '#22c55e', avatar: '👑', isHuman: true, cards: [], gold: 80, techs: [], eliminated: false, missionId: null }
         ];
         state.year = 1815;
         for (let i = 0; i < state.botCount; i++) {
             const f = BOT_FACTIONS[i];
-            state.players.push({ id: i + 1, name: f.name, color: f.color, avatar: f.avatar, isHuman: false, cards: [], eliminated: false, missionId: null });
+            state.players.push({ id: i + 1, name: f.name, color: f.color, avatar: f.avatar, isHuman: false, cards: [], gold: 80, techs: [], eliminated: false, missionId: null });
         }
 
         // Assign secret missions
@@ -254,6 +263,8 @@
         dom.phasePill.textContent = `Phase: ${phaseLabels[state.phase]}`;
         dom.turnPill.textContent = active ? `${active.avatar} ${active.name}` : '—';
         dom.cardCount.textContent = state.players[0]?.cards.length || 0;
+        const goldEl = document.getElementById('gold-count');
+        if (goldEl) goldEl.textContent = state.players[0]?.gold || 0;
 
         dom.reinforceBadge.classList.toggle('hidden', !(humanTurn && state.phase === 'reinforce' && state.reinforcements > 0));
         dom.reinforceBadge.textContent = `+${state.reinforcements} Truppen verfügbar`;
@@ -395,13 +406,21 @@
     function resolveBattleRound(fromId, toId) {
         const aCell = state.board[fromId];
         const dCell = state.board[toId];
+        const atkPlayer = state.players[aCell.ownerId];
+        const defPlayer = state.players[dCell.ownerId];
+
+        // Modern Guard first-strike bonus
+        if (atkPlayer?.techs?.includes('guard') && dCell.troops > 2) {
+            dCell.troops -= 1;
+        }
+
         const atkCount = Math.min(3, aCell.troops - 1);
         const defCount = Math.min(2, dCell.troops);
 
         const atkDice = Array.from({ length: atkCount }, () => 1 + Math.floor(Math.random() * 6)).sort((a, b) => b - a);
         const defDice = Array.from({ length: defCount }, () => 1 + Math.floor(Math.random() * 6)).sort((a, b) => b - a);
-        // Capital gives +1 to highest defender die (max 6)
-        if (dCell.isCapital && defDice.length) defDice[0] = Math.min(6, defDice[0] + 1);
+        if (atkPlayer?.techs?.includes('artillery') && atkDice.length) atkDice[0] = Math.min(6, atkDice[0] + 1);
+        if ((dCell.isCapital || defPlayer?.techs?.includes('fortress')) && defDice.length) defDice[0] = Math.min(6, defDice[0] + 1);
 
         let aLoss = 0, dLoss = 0;
         for (let i = 0; i < Math.min(atkDice.length, defDice.length); i++) {
@@ -425,7 +444,8 @@
         RiskSound.conquer();
 
         const atkPlayer = state.players[attackerId];
-        log(`🚩 ${atkPlayer.name} erobert ${getTerr(toId).name}!`);
+        atkPlayer.gold = (atkPlayer.gold || 0) + 35;
+        log(`🚩 ${atkPlayer.name} erobert ${getTerr(toId).name} (+35 🪙 Beute)!`);
 
         // Check elimination
         const prevLeft = Object.values(state.board).filter(b => b.ownerId === prevOwner).length;
@@ -505,6 +525,9 @@
         }
 
         state.phase = 'reinforce';
+        const nextP = state.players[state.currentPlayer];
+        const terrIncome = Object.values(state.board).filter(b => b.ownerId === nextP.id).length * 8;
+        nextP.gold = (nextP.gold || 0) + terrIncome;
         state.reinforcements = calcReinforcements(state.currentPlayer);
         saveGame();
         renderAll();
@@ -654,6 +677,47 @@
         dom.modalCards.classList.add('hidden');
         renderAll();
     });
+
+    function renderTechModal() {
+        const p = state.players[0];
+        if (!p) return;
+        p.techs = p.techs || [];
+        document.getElementById('tech-gold').textContent = `${p.gold || 0} 🪙`;
+        const list = document.getElementById('tech-list');
+        list.innerHTML = '';
+        TECH_UPGRADES.forEach(u => {
+            const owned = p.techs.includes(u.id);
+            const row = document.createElement('div');
+            row.className = 'tech-item' + (owned ? ' owned' : '');
+            row.innerHTML = `
+                <div>
+                    <strong>${u.icon} ${u.name}</strong>
+                    <small>${u.desc}</small>
+                </div>
+                <button class="cta-btn ${owned ? 'btn-secondary' : ''}" ${owned || (p.gold || 0) < u.cost ? 'disabled' : ''}>
+                    ${owned ? 'Erforscht ✓' : `${u.cost} 🪙`}
+                </button>
+            `;
+            row.querySelector('button').addEventListener('click', () => {
+                if (owned || (p.gold || 0) < u.cost) return;
+                p.gold -= u.cost;
+                p.techs.push(u.id);
+                RiskSound.conquer();
+                log(`⚙️ Technologie erforscht: ${u.icon} ${u.name}!`);
+                saveGame();
+                renderTechModal();
+                renderAll();
+            });
+            list.appendChild(row);
+        });
+    }
+
+    document.getElementById('btn-tech').addEventListener('click', () => {
+        renderTechModal();
+        dom.modalTech.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-tech-close').addEventListener('click', () => dom.modalTech.classList.add('hidden'));
 
     document.getElementById('btn-cards-close').addEventListener('click', () => dom.modalCards.classList.add('hidden'));
 
