@@ -18,7 +18,76 @@
     let gameOver = false;
     let themeIdx = 0;
     let hintMove = null;
+    let activeLesson = null;
     let analysis = { best: 0, good: 0, inaccuracy: 0, blunder: 0, castled: false, notes: [] };
+
+    const LESSONS = [
+        {
+            title: '1. Grundreihenmatt (Matt in 1)',
+            desc: 'Der schwarze König ist hinter seinen eigenen Bauern eingesperrt. Setze ihn mit deinem Turm auf der 8. Reihe matt!',
+            setup: [
+                [0, 6, 'b', 'K'], [1, 5, 'b', 'P'], [1, 6, 'b', 'P'], [1, 7, 'b', 'P'],
+                [7, 4, 'w', 'K'], [7, 0, 'w', 'R']
+            ],
+            solution: { fr: 7, fc: 0, tr: 0, tc: 0 }
+        },
+        {
+            title: '2. Die Springer-Gabel',
+            desc: 'Springe mit deinem Springer auf c7, um den schwarzen König UND den Turm auf a8 gleichzeitig anzugreifen!',
+            setup: [
+                [0, 4, 'b', 'K'], [0, 0, 'b', 'R'],
+                [7, 4, 'w', 'K'], [3, 3, 'w', 'N']
+            ],
+            solution: { fr: 3, fc: 3, tr: 1, tc: 2 }
+        },
+        {
+            title: '3. Das Schäfermatt (Matt in 1)',
+            desc: 'Dein Läufer auf c4 deckt das Feld f7. Schlage mit der Dame auf f7 für ein sofortiges Schachmatt!',
+            setup: [
+                [0, 4, 'b', 'K'], [1, 4, 'b', 'P'], [1, 5, 'b', 'P'], [1, 3, 'b', 'P'], [0, 3, 'b', 'Q'], [0, 5, 'b', 'B'],
+                [7, 4, 'w', 'K'], [4, 2, 'w', 'B'], [3, 7, 'w', 'Q']
+            ],
+            solution: { fr: 3, fc: 7, tr: 1, tc: 5 }
+        },
+        {
+            title: '4. Ungedeckte Dame schlagen',
+            desc: 'Die schwarze Dame auf d5 steht komplett ungedeckt. Schlage sie mit deinem Läufer!',
+            setup: [
+                [0, 4, 'b', 'K'], [3, 3, 'b', 'Q'],
+                [7, 4, 'w', 'K'], [6, 6, 'w', 'B']
+            ],
+            solution: { fr: 6, fc: 6, tr: 3, tc: 3 }
+        },
+        {
+            title: '5. Kurze Rochade (Königssicherheit)',
+            desc: 'Bewege deinen König von e1 zwei Felder nach rechts auf g1, um die kurze Rochade auszuführen!',
+            setup: [
+                [0, 4, 'b', 'K'],
+                [7, 4, 'w', 'K'], [7, 7, 'w', 'R'], [6, 5, 'w', 'P'], [6, 6, 'w', 'P'], [6, 7, 'w', 'P']
+            ],
+            solution: { fr: 7, fc: 4, tr: 7, tc: 6 }
+        }
+    ];
+
+    function startLesson(idx) {
+        const l = LESSONS[idx];
+        if (!l) return;
+        activeLesson = { ...l, idx };
+        board = Array.from({ length: 8 }, () => Array(8).fill(null));
+        l.setup.forEach(([r, c, color, type]) => {
+            board[r][c] = { color, type, moved: false };
+        });
+        turn = 'w';
+        selected = null;
+        legalMoves = [];
+        lastMove = null;
+        hintMove = null;
+        gameOver = false;
+        dom.history.innerHTML = `<div style="color:#fde047;font-weight:700;">🎓 ${l.title}</div><div>${l.desc}</div>`;
+        document.getElementById('modal-lessons').classList.add('hidden');
+        render();
+        dom.status.textContent = `🎓 ${l.title}`;
+    }
 
     const dom = {
         board: document.getElementById('chess-board'),
@@ -270,6 +339,36 @@
     }
 
     function executeMove(m) {
+        // Handle active interactive lesson check
+        if (activeLesson) {
+            const s = activeLesson.solution;
+            if (m.fr === s.fr && m.fc === s.fc && m.tr === s.tr && m.tc === s.tc) {
+                board = applyMoveOn(board, m);
+                lastMove = m;
+                selected = null;
+                legalMoves = [];
+                playClick();
+                const solvedIdx = activeLesson.idx;
+                activeLesson = null;
+                gameOver = true;
+                render();
+                dom.status.textContent = '🎉 RICHTIG GELÖST! Stark gemacht!';
+                const nextDiv = document.createElement('div');
+                nextDiv.style.color = '#4ade80';
+                nextDiv.style.fontWeight = '800';
+                nextDiv.textContent = solvedIdx + 1 < LESSONS.length
+                    ? '✅ Perfekt! Öffne „🎓 Lektionen“ für die nächste Übung.'
+                    : '🏆 Alle 5 Lektionen gemeistert!';
+                dom.history.appendChild(nextDiv);
+            } else {
+                dom.status.textContent = '❌ Nicht ganz — probier es nochmal! (Tipp-Button hilft)';
+                selected = null;
+                legalMoves = [];
+                render();
+            }
+            return;
+        }
+
         let ratingTag = '';
         if (turn === 'w') {
             if (m.castle) analysis.castled = true;
@@ -396,15 +495,36 @@
         dom.capBlack.textContent = captured.b.join(' ');
     }
 
+    document.getElementById('btn-lessons').addEventListener('click', () => {
+        const list = document.getElementById('lessons-list');
+        list.innerHTML = '';
+        LESSONS.forEach((l, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'cta-btn';
+            btn.style.textAlign = 'left';
+            btn.style.background = 'rgba(255,255,255,0.08)';
+            btn.innerHTML = `<strong>${l.title}</strong><br><small style="color:#9eb3a8;font-weight:400;">${l.desc}</small>`;
+            btn.addEventListener('click', () => startLesson(idx));
+            list.appendChild(btn);
+        });
+        document.getElementById('modal-lessons').classList.remove('hidden');
+    });
+    document.getElementById('btn-lessons-close').addEventListener('click', () => document.getElementById('modal-lessons').classList.add('hidden'));
+
     document.getElementById('btn-hint').addEventListener('click', () => {
         if (gameOver || turn !== 'w') return;
+        if (activeLesson) {
+            hintMove = activeLesson.solution;
+            render();
+            return;
+        }
         const best = findBestWhiteMove(board);
         hintMove = best.move;
         render();
     });
     document.getElementById('btn-analysis').addEventListener('click', openAnalysisModal);
     document.getElementById('btn-rev-close').addEventListener('click', () => document.getElementById('modal-review').classList.add('hidden'));
-    document.getElementById('btn-new').addEventListener('click', () => { dom.history.innerHTML = ''; initGame(); });
+    document.getElementById('btn-new').addEventListener('click', () => { activeLesson = null; dom.history.innerHTML = ''; initGame(); });
     document.getElementById('btn-theme').addEventListener('click', () => {
         themeIdx = (themeIdx + 1) % THEMES.length;
         document.body.dataset.board = THEMES[themeIdx];

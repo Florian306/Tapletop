@@ -20,6 +20,7 @@
                     <option value="2" selected>KI: Mittel</option>
                     <option value="3">KI: Meister</option>
                 </select>
+                <button id="btn-lessons" class="hud-btn" title="Interaktive Schach-Lektionen">🎓 Lektionen</button>
                 <button id="btn-hint" class="hud-btn" title="Besten Zug anzeigen">💡 Tipp</button>
                 <button id="btn-analysis" class="hud-btn" title="Partie-Analyse & Tipps">📊 Analyse</button>
                 <button id="btn-theme" class="hud-btn" title="Brett-Stil wechseln">🎨 Brett</button>
@@ -45,6 +46,16 @@
                 </div>
             </aside>
         </main>
+    </div>
+
+    <!-- Interactive Chess Lessons Modal -->
+    <div class="modal-backdrop hidden" id="modal-lessons">
+        <div class="modal-card">
+            <h2>🎓 Schach-Akademie</h2>
+            <p style="color:#9eb3a8;font-size:0.86rem;margin:6px 0 14px;">Wähle eine Lektion — die Stellung wird direkt auf dem Brett aufgebaut!</p>
+            <div id="lessons-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+            <button id="btn-lessons-close" class="cta-btn" style="background:#334155;">Schließen</button>
+        </div>
     </div>
 
     <!-- Chess Game Review & Tips Modal -->
