@@ -119,14 +119,6 @@ body {
 .tab-btn.active { background: #2563eb; color: #fff; }
 .tab-panel { display: none; flex: 1; min-height: 0; overflow-y: auto; }
 .tab-panel.active { display: flex; flex-direction: column; gap: 6px; }
-    font-size: 0.84rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.hud-btn:hover {
-    background: rgba(255, 255, 255, 0.14);
-}
 
 .layout {
     flex: 1;
