@@ -553,6 +553,22 @@
         await new Promise(r => setTimeout(r, 850));
         if (state.gameOver) return;
 
+        // 0. Bot trades Risk cards & buys military tech if affordable
+        if (canTradeSet(bot.cards || [])) {
+            bot.cards.splice(0, 3);
+            const bonus = [4, 6, 8, 10, 12, 15][Math.min(5, state.tradeCount)] || 15;
+            state.tradeCount++;
+            state.reinforcements += bonus;
+            log(`🃏 ${bot.name} tauscht ein Karten-Set ein (+${bonus} Truppen)!`);
+        }
+        bot.techs = bot.techs || [];
+        const nextTech = TECH_UPGRADES.find(u => !bot.techs.includes(u.id) && (bot.gold || 0) >= u.cost);
+        if (nextTech) {
+            bot.gold -= nextTech.cost;
+            bot.techs.push(nextTech.id);
+            log(`⚙️ ${bot.name} erforscht ${nextTech.icon} ${nextTech.name}!`);
+        }
+
         // 1. Reinforce
         while (state.reinforcements > 0) {
             const targetId = RiskAI.pickReinforceTarget(state, botId);
@@ -565,15 +581,15 @@
         renderAll();
         await new Promise(r => setTimeout(r, 700));
 
-        // 2. Attack (up to 4 battles per turn)
-        for (let step = 0; step < 4; step++) {
+        // 2. Attack (up to 5 smart battles per turn)
+        for (let step = 0; step < 5; step++) {
             if (state.gameOver) return;
             const atk = RiskAI.pickBestAttack(state, botId);
             if (!atk) break;
             const res = resolveBattleRound(atk.from, atk.to);
             if (res.conquered) {
                 handleConquest(atk.from, atk.to, botId);
-                const moveAmt = Math.max(0, Math.floor((state.board[atk.from].troops - 1) * 0.6));
+                const moveAmt = Math.max(0, Math.floor((state.board[atk.from].troops - 1) * 0.7));
                 state.board[atk.from].troops -= moveAmt;
                 state.board[atk.to].troops += moveAmt;
             }
@@ -581,7 +597,16 @@
             await new Promise(r => setTimeout(r, 650));
         }
 
-        if (!state.gameOver) endCurrentTurn();
+        // 3. Fortify: move interior troops to the front line
+        if (!state.gameOver) {
+            const fort = RiskAI.pickFortifyMove(state, botId, isConnectedOwned);
+            if (fort && fort.amount > 0) {
+                state.board[fort.from].troops -= fort.amount;
+                state.board[fort.to].troops += fort.amount;
+                log(`🪖 ${bot.name} verlegt ${fort.amount} Truppen an die Front (${getTerr(fort.to).name}).`);
+            }
+            endCurrentTurn();
+        }
     }
 
     // --- Event Listeners ---
