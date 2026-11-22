@@ -260,9 +260,8 @@ body[data-mtheme="radar"] .world-map {
 }
 
 .troop-circle {
-    stroke: #fff;
-    stroke-width: 2.2;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
+    stroke-width: 3.2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .troop-circle.is-capital {
@@ -676,8 +675,14 @@ body[data-mtheme="radar"] .world-map {
     border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-.mini-act-btn:hover:not(:disabled) { background: #2563eb; }
-.mini-act-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.mini-act-btn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.mini-act-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
 
 @media (max-width: 960px) {
     body {
