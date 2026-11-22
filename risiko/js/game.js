@@ -176,39 +176,48 @@
             const owner = state.players[cell.ownerId];
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', t.d);
-            path.setAttribute('fill', owner.color);
-            path.setAttribute('fill-opacity', '0.78');
             let cls = 'territory-path';
             if (state.selectedId === t.id) cls += ' selected';
             else if (selTerr && state.phase === 'attack' && selTerr.adj.includes(t.id) && cell.ownerId !== 0) cls += ' target-valid';
             else if (selTerr && state.phase === 'fortify' && cell.ownerId === 0 && isConnectedOwned(selTerr.id, t.id, 0)) cls += ' fortify-valid';
-            path.setAttribute('class', cls);
-            path.addEventListener('click', e => handleTerritoryClick(t.id, e));
-            g.appendChild(path);
 
-            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            label.setAttribute('x', t.x);
-            label.setAttribute('y', t.y - 14);
-            label.setAttribute('class', 'territory-label');
-            label.textContent = (cell.isCapital ? '🏰 ' : '') + t.name;
-            g.appendChild(label);
+            const paths = (window.RISK_GEO.loaded && window.RISK_GEO.byTerritory[t.id]?.length)
+                ? window.RISK_GEO.byTerritory[t.id]
+                : (t.d ? [t.d] : []);
 
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', t.x);
-            circle.setAttribute('cy', t.y + 6);
-            circle.setAttribute('r', '13');
-            circle.setAttribute('fill', '#0b1620');
-            circle.setAttribute('class', 'troop-circle');
-            g.appendChild(circle);
+            paths.forEach(dStr => {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', dStr);
+                path.setAttribute('fill', owner.color);
+                path.setAttribute('fill-opacity', '0.82');
+                path.setAttribute('class', cls);
+                path.addEventListener('click', e => handleTerritoryClick(t.id, e));
+                g.appendChild(path);
+            });
 
-            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            txt.setAttribute('x', t.x);
-            txt.setAttribute('y', t.y + 6);
-            txt.setAttribute('class', 'troop-text');
-            txt.textContent = cell.troops;
-            g.appendChild(txt);
+            if (isFinite(t.x) && isFinite(t.y)) {
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', t.x);
+                label.setAttribute('y', t.y - 14);
+                label.setAttribute('class', 'territory-label');
+                label.textContent = (cell.isCapital ? '🏰 ' : '') + t.name;
+                g.appendChild(label);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', t.x);
+                circle.setAttribute('cy', t.y + 5);
+                circle.setAttribute('r', '12');
+                circle.setAttribute('fill', '#0b1620');
+                circle.setAttribute('class', 'troop-circle');
+                g.appendChild(circle);
+
+                const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                txt.setAttribute('x', t.x);
+                txt.setAttribute('y', t.y + 5);
+                txt.setAttribute('class', 'troop-text');
+                txt.textContent = cell.troops;
+                g.appendChild(txt);
+            }
 
             dom.territoriesLayer.appendChild(g);
         });
@@ -652,6 +661,11 @@
             renderAll();
             if (!state.players[state.currentPlayer].isHuman) runBotTurn(state.currentPlayer);
         }
+    });
+
+    // Load real Natural Earth world map on startup
+    loadRealWorldMap().then(() => {
+        if (state.players.length > 0) renderAll();
     });
 
     if (loadGame()) dom.btnResume.classList.remove('hidden');
