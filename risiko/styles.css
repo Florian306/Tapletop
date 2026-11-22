@@ -117,22 +117,40 @@ body {
 }
 
 .territory-label {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 800;
-    fill: #fff;
+    fill: #f8fafc;
     text-anchor: middle;
     pointer-events: none;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+    paint-order: stroke;
+    stroke: rgba(5, 14, 22, 0.92);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+.troop-badge-group {
+    cursor: pointer;
+    transition: transform 0.14s ease;
+}
+
+.troop-badge-group:hover .troop-circle {
+    stroke: #fde047;
+    stroke-width: 3;
 }
 
 .troop-circle {
     stroke: #fff;
-    stroke-width: 2;
-    pointer-events: none;
+    stroke-width: 2.2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
+}
+
+.troop-circle.is-capital {
+    stroke: #facc15;
+    stroke-width: 2.8;
 }
 
 .troop-text {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 900;
     fill: #fff;
     text-anchor: middle;

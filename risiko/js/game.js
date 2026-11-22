@@ -27,6 +27,7 @@
     const dom = {
         seaRoutes: document.getElementById('sea-routes'),
         territoriesLayer: document.getElementById('territories-layer'),
+        labelsLayer: document.getElementById('labels-layer'),
         fxLayer: document.getElementById('fx-svg-layer'),
         phasePill: document.getElementById('phase-pill'),
         turnPill: document.getElementById('turn-pill'),
@@ -169,6 +170,7 @@
         }
 
         dom.territoriesLayer.innerHTML = '';
+        dom.labelsLayer.innerHTML = '';
         const selTerr = state.selectedId ? getTerr(state.selectedId) : null;
 
         RISK_TERRITORIES.forEach(t => {
@@ -189,37 +191,44 @@
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', dStr);
                 path.setAttribute('fill', owner.color);
-                path.setAttribute('fill-opacity', '0.82');
+                path.setAttribute('fill-opacity', '0.84');
                 path.setAttribute('class', cls);
                 path.addEventListener('click', e => handleTerritoryClick(t.id, e));
                 g.appendChild(path);
             });
+            dom.territoriesLayer.appendChild(g);
 
+            // Render clickable troop medallion & crisp label in top layer
             if (isFinite(t.x) && isFinite(t.y)) {
+                const lg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                lg.setAttribute('class', 'troop-badge-group');
+                lg.addEventListener('click', e => handleTerritoryClick(t.id, e));
+
                 const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 label.setAttribute('x', t.x);
-                label.setAttribute('y', t.y - 14);
+                label.setAttribute('y', t.y - 15);
                 label.setAttribute('class', 'territory-label');
                 label.textContent = (cell.isCapital ? '🏰 ' : '') + t.name;
-                g.appendChild(label);
+                lg.appendChild(label);
 
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 circle.setAttribute('cx', t.x);
-                circle.setAttribute('cy', t.y + 5);
-                circle.setAttribute('r', '12');
-                circle.setAttribute('fill', '#0b1620');
-                circle.setAttribute('class', 'troop-circle');
-                g.appendChild(circle);
+                circle.setAttribute('cy', t.y + 4);
+                circle.setAttribute('r', '12.5');
+                circle.setAttribute('fill', '#09131c');
+                circle.setAttribute('stroke', state.selectedId === t.id ? '#fde047' : owner.color);
+                circle.setAttribute('class', 'troop-circle' + (cell.isCapital ? ' is-capital' : ''));
+                lg.appendChild(circle);
 
                 const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 txt.setAttribute('x', t.x);
-                txt.setAttribute('y', t.y + 5);
+                txt.setAttribute('y', t.y + 4);
                 txt.setAttribute('class', 'troop-text');
                 txt.textContent = cell.troops;
-                g.appendChild(txt);
-            }
+                lg.appendChild(txt);
 
-            dom.territoriesLayer.appendChild(g);
+                dom.labelsLayer.appendChild(lg);
+            }
         });
     }
 
