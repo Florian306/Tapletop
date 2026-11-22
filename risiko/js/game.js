@@ -65,7 +65,7 @@
     }
 
     function saveGame() {
-        try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch {}
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch { }
     }
 
     function loadGame() {
@@ -500,7 +500,7 @@
                 ? 'Glückwunsch General! Deine Fraktion dominiert die Weltkarte.'
                 : `${winner.name} hat die Kampagne für sich entschieden.`;
             dom.modalInfo.classList.remove('hidden');
-            try { localStorage.removeItem(SAVE_KEY); } catch {}
+            try { localStorage.removeItem(SAVE_KEY); } catch { }
         }
     }
 
@@ -767,14 +767,23 @@
 
         document.getElementById('prov-title').textContent = `🏰 ${t.name} — Städte & Garnisonen`;
         const nodes = document.getElementById('prov-nodes');
-        nodes.innerHTML = cities.map(c => `
+        const coords = [{ x: 90, y: 92 }, { x: 240, y: 62 }, { x: 390, y: 98 }];
+        nodes.innerHTML = cities.map((c, i) => {
+            const pt = coords[i] || { x: c.x, y: c.y };
+            const wallRing = c.wall
+                ? `<circle cx="${pt.x}" cy="${pt.y}" r="28" fill="none" stroke="#facc15" stroke-width="3" stroke-dasharray="6 3"/>`
+                : '';
+            const bld = `${c.market ? '🏪' : ''}${c.forge ? '🏭' : ''}`;
+            return `
             <g>
-                <circle cx="${c.x}" cy="${c.y}" r="22" fill="#132a3a" stroke="${c.wall ? '#facc15' : '#22c55e'}" stroke-width="2.5"/>
-                <text x="${c.x}" y="${c.y - 2}" text-anchor="middle" font-size="13" fill="#fff" font-weight="900">${c.troops}</text>
-                <text x="${c.x}" y="${c.y + 12}" text-anchor="middle" font-size="9" fill="#93c5fd">${c.role}</text>
-                <text x="${c.x}" y="${c.y + 36}" text-anchor="middle" font-size="11" fill="#fef9c3" font-weight="700">${c.name}</text>
-            </g>
-        `).join('');
+                ${wallRing}
+                <circle cx="${pt.x}" cy="${pt.y}" r="22" fill="#0f172a" stroke="#e2e8f0" stroke-width="2.2"/>
+                <text x="${pt.x}" y="${pt.y - 2}" text-anchor="middle" font-size="14" fill="#fff" font-weight="900">${c.troops}</text>
+                <text x="${pt.x}" y="${pt.y + 13}" text-anchor="middle" font-size="10">${c.role}</text>
+                <text x="${pt.x}" y="${pt.y + 39}" text-anchor="middle" font-family="Georgia, serif" font-size="11.5" fill="#fef9c3" font-weight="700" paint-order="stroke" stroke="#0b1620" stroke-width="3">${c.name}</text>
+                ${bld ? `<text x="${pt.x}" y="${pt.y - 28}" text-anchor="middle" font-size="12">${bld}</text>` : ''}
+            </g>`;
+        }).join('');
 
         const list = document.getElementById('prov-cities-list');
         list.innerHTML = '';

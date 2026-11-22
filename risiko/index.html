@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RISIKO — Global Domination</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app">
         <!-- Top War Room HUD -->
@@ -18,10 +20,12 @@
                 <div id="turn-pill" class="turn-pill">Du bist dran</div>
             </div>
             <div class="hud-right">
-                <button id="btn-tech" class="hud-btn" title="Armee modernisieren">⚙️ Forschung (<span id="gold-count">0</span> 🪙)</button>
+                <button id="btn-tech" class="hud-btn" title="Armee modernisieren">⚙️ Forschung (<span
+                        id="gold-count">0</span> 🪙)</button>
                 <button id="btn-map-theme" class="hud-btn" title="Karten-Stil wechseln">🎨 Karte</button>
                 <button id="btn-mission" class="hud-btn" title="Deine geheime Mission">🎯 Mission</button>
-                <button id="btn-cards" class="hud-btn" title="Risiko-Karten eintauschen">🃏 Karten (<span id="card-count">0</span>)</button>
+                <button id="btn-cards" class="hud-btn" title="Risiko-Karten eintauschen">🃏 Karten (<span
+                        id="card-count">0</span>)</button>
                 <button id="btn-sound" class="hud-btn" title="Sound an/aus">🔊</button>
                 <button id="btn-new" class="hud-btn">Neues Spiel</button>
             </div>
@@ -34,32 +38,34 @@
                 <svg id="world-map" viewBox="0 0 1100 580" class="world-map" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="ocean-grad" cx="50%" cy="45%" r="65%">
-                            <stop offset="0%" stop-color="#14364a"/>
-                            <stop offset="65%" stop-color="#0a2030"/>
-                            <stop offset="100%" stop-color="#05111b"/>
+                            <stop offset="0%" stop-color="#14364a" />
+                            <stop offset="65%" stop-color="#0a2030" />
+                            <stop offset="100%" stop-color="#05111b" />
                         </radialGradient>
                         <pattern id="ocean-grid" width="55" height="55" patternUnits="userSpaceOnUse">
-                            <path d="M 55 0 L 0 0 0 55" fill="none" stroke="rgba(125, 211, 252, 0.07)" stroke-width="1"/>
+                            <path d="M 55 0 L 0 0 0 55" fill="none" stroke="rgba(125, 211, 252, 0.07)"
+                                stroke-width="1" />
                         </pattern>
                         <filter id="coast-glow" x="-10%" y="-10%" width="120%" height="120%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.28"/>
-                            <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.55"/>
+                            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.28" />
+                            <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.55" />
                         </filter>
                         <filter id="glow-gold">
-                            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#facc15" flood-opacity="0.95"/>
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#facc15" flood-opacity="0.95" />
                         </filter>
                     </defs>
-                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grad)" rx="12"/>
-                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grid)" rx="12"/>
+                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grad)" rx="12" />
+                    <rect x="0" y="0" width="1100" height="580" fill="url(#ocean-grid)" rx="12" />
                     <!-- Decorative Compass Rose -->
                     <g transform="translate(88, 498)" opacity="0.28" stroke="#7dd3fc" fill="none">
-                        <circle cx="0" cy="0" r="34" stroke-width="1.2" stroke-dasharray="3 3"/>
-                        <circle cx="0" cy="0" r="24" stroke-width="1"/>
-                        <polygon points="0,-32 6,-6 0,-12 -6,-6" fill="#7dd3fc"/>
-                        <polygon points="0,32 6,6 0,12 -6,6" fill="#38bdf8"/>
-                        <polygon points="32,0 6,6 12,0 6,-6" fill="#38bdf8"/>
-                        <polygon points="-32,0 -6,6 -12,0 -6,-6" fill="#38bdf8"/>
-                        <text x="0" y="-38" text-anchor="middle" font-size="9" font-weight="800" fill="#7dd3fc" stroke="none">N</text>
+                        <circle cx="0" cy="0" r="34" stroke-width="1.2" stroke-dasharray="3 3" />
+                        <circle cx="0" cy="0" r="24" stroke-width="1" />
+                        <polygon points="0,-32 6,-6 0,-12 -6,-6" fill="#7dd3fc" />
+                        <polygon points="0,32 6,6 0,12 -6,6" fill="#38bdf8" />
+                        <polygon points="32,0 6,6 12,0 6,-6" fill="#38bdf8" />
+                        <polygon points="-32,0 -6,6 -12,0 -6,-6" fill="#38bdf8" />
+                        <text x="0" y="-38" text-anchor="middle" font-size="9" font-weight="800" fill="#7dd3fc"
+                            stroke="none">N</text>
                     </g>
                     <g id="sea-routes"></g>
                     <g id="territories-layer" filter="url(#coast-glow)"></g>
@@ -103,7 +109,8 @@
         <div class="modal-card">
             <div class="modal-badge">⚔️ RISIKO</div>
             <h2>Global Domination</h2>
-            <p class="modal-desc">Erobere die Welt oder erfülle deine geheime Mission — mit Hauptstädten (+1 Verteidigung), Risiko-Karten und taktischen KI-Generälen.</p>
+            <p class="modal-desc">Erobere die Welt oder erfülle deine geheime Mission — mit Hauptstädten (+1
+                Verteidigung), Risiko-Karten und taktischen KI-Generälen.</p>
 
             <div class="start-opts">
                 <label>Spielmodus</label>
@@ -180,7 +187,8 @@
     <div class="modal-backdrop hidden" id="modal-cards">
         <div class="modal-card">
             <div class="modal-badge">🃏 RISIKO-KARTEN</div>
-            <p class="modal-desc">Tausche 3 gleiche oder 3 verschiedene Symbole für Bonus-Truppen ein (nur in der Verstärkungs-Phase).</p>
+            <p class="modal-desc">Tausche 3 gleiche oder 3 verschiedene Symbole für Bonus-Truppen ein (nur in der
+                Verstärkungs-Phase).</p>
             <div id="cards-grid" class="cards-grid"></div>
             <div class="modal-actions" style="margin-top:14px;">
                 <button id="btn-trade-cards" class="cta-btn" disabled>Set eintauschen (+4 Truppen)</button>
@@ -193,9 +201,11 @@
     <div class="modal-backdrop hidden" id="modal-tech">
         <div class="modal-card" style="max-width:480px;">
             <div class="modal-badge">⚙️ ARMEE-MODERNISIERUNG</div>
-            <p class="modal-desc">Investiere deine Kriegskasse (<strong id="tech-gold" style="color:#fde047;">0 🪙</strong>) in moderne Militär-Technologien!</p>
+            <p class="modal-desc">Investiere deine Kriegskasse (<strong id="tech-gold" style="color:#fde047;">0
+                    🪙</strong>) in moderne Militär-Technologien!</p>
             <div id="tech-list" class="tech-list"></div>
-            <button id="btn-tech-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Schließen</button>
+            <button id="btn-tech-close" class="cta-btn btn-secondary"
+                style="width:100%;margin-top:12px;">Schließen</button>
         </div>
     </div>
 
@@ -205,11 +215,35 @@
             <div class="modal-badge" id="prov-title">🏰 Provinz-Ansicht</div>
             <p class="modal-desc" id="prov-desc">Verteile deine Truppen taktisch auf die Städte und baue Mauern, Märkte oder Schmieden aus.</p>
 
-            <svg id="prov-svg" viewBox="0 0 480 150" class="prov-svg">
-                <rect width="480" height="150" rx="10" fill="#0b1c26" stroke="rgba(212,175,55,0.35)"/>
-                <line x1="90" y1="78" x2="240" y2="50" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5 5" opacity="0.5"/>
-                <line x1="240" y1="50" x2="390" y2="85" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5 5" opacity="0.5"/>
-                <line x1="90" y1="78" x2="390" y2="85" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.35"/>
+            <svg id="prov-svg" viewBox="0 0 480 185" class="prov-svg">
+                <defs>
+                    <radialGradient id="prov-land" cx="50%" cy="45%" r="65%">
+                        <stop offset="0%" stop-color="#294834"/>
+                        <stop offset="70%" stop-color="#1b3124"/>
+                        <stop offset="100%" stop-color="#101f17"/>
+                    </radialGradient>
+                </defs>
+                <!-- Topographic terrain background -->
+                <rect width="480" height="185" rx="12" fill="url(#prov-land)" stroke="rgba(212,175,55,0.45)" stroke-width="1.5"/>
+                <!-- Subtle elevation contour lines -->
+                <path d="M-10,45 Q120,15 240,38 T490,28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+                <path d="M-10,145 Q150,115 290,148 T490,130" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
+                <!-- River winding through the province -->
+                <path d="M175,0 C195,55 150,110 190,185" fill="none" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round" opacity="0.45"/>
+                <path d="M175,0 C195,55 150,110 190,185" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+                <!-- Decorative mountains & forest hills -->
+                <g fill="#334155" opacity="0.55">
+                    <polygon points="35,45 50,20 65,45"/>
+                    <polygon points="52,45 64,26 76,45"/>
+                    <polygon points="405,42 422,16 439,42"/>
+                </g>
+                <g fill="#166534" opacity="0.55">
+                    <circle cx="320" cy="145" r="10"/><circle cx="332" cy="148" r="8"/><circle cx="310" cy="150" r="8"/>
+                    <circle cx="120" cy="152" r="9"/><circle cx="132" cy="155" r="7"/>
+                </g>
+                <!-- Cobblestone trade roads -->
+                <path d="M90,92 Q165,42 240,62 T390,98" fill="none" stroke="#d6b26e" stroke-width="4" stroke-dasharray="6 4" opacity="0.65"/>
+                <path d="M90,92 Q240,128 390,98" fill="none" stroke="#d6b26e" stroke-width="2.5" stroke-dasharray="5 5" opacity="0.4"/>
                 <g id="prov-nodes"></g>
             </svg>
 
@@ -235,4 +269,5 @@
     <script src="js/ai.js"></script>
     <script src="js/game.js"></script>
 </body>
+
 </html>
