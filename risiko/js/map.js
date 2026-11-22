@@ -79,7 +79,8 @@ window.RISK_GEO = { loaded: false, byTerritory: {} };
 async function loadRealWorldMap() {
     if (window.RISK_GEO.loaded || typeof d3 === 'undefined' || typeof topojson === 'undefined') return false;
     try {
-        const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+        let res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+        if (!res.ok) res = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json');
         const world = await res.json();
         const countries = topojson.feature(world, world.objects.countries).features;
 
