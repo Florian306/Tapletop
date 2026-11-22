@@ -71,6 +71,7 @@
                 <div class="map-action-bar">
                     <div id="instruction-text" class="instruction-text">Wähle ein eigenes Gebiet zur Verstärkung.</div>
                     <div class="bar-buttons">
+                        <button id="btn-open-province" class="cta-btn btn-secondary hidden" title="Städte & Garnisonen dieses Landes verwalten">🔍 Städte</button>
                         <span id="reinforce-badge" class="reinforce-badge hidden">+3 Truppen verfügbar</span>
                         <button id="btn-next-phase" class="cta-btn">Weiter → Angriff</button>
                     </div>
@@ -195,6 +196,25 @@
             <p class="modal-desc">Investiere deine Kriegskasse (<strong id="tech-gold" style="color:#fde047;">0 🪙</strong>) in moderne Militär-Technologien!</p>
             <div id="tech-list" class="tech-list"></div>
             <button id="btn-tech-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Tactical Province / City View Modal -->
+    <div class="modal-backdrop hidden" id="modal-province">
+        <div class="modal-card" style="max-width:560px;">
+            <div class="modal-badge" id="prov-title">🏰 Provinz-Ansicht</div>
+            <p class="modal-desc" id="prov-desc">Verteile deine Truppen taktisch auf die Städte und baue Mauern, Märkte oder Schmieden aus.</p>
+
+            <svg id="prov-svg" viewBox="0 0 480 150" class="prov-svg">
+                <rect width="480" height="150" rx="10" fill="#0b1c26" stroke="rgba(212,175,55,0.35)"/>
+                <line x1="90" y1="78" x2="240" y2="50" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5 5" opacity="0.5"/>
+                <line x1="240" y1="50" x2="390" y2="85" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="5 5" opacity="0.5"/>
+                <line x1="90" y1="78" x2="390" y2="85" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.35"/>
+                <g id="prov-nodes"></g>
+            </svg>
+
+            <div id="prov-cities-list" class="tech-list" style="margin-top:10px;"></div>
+            <button id="btn-prov-close" class="cta-btn btn-secondary" style="width:100%;margin-top:12px;">Zurück zur Weltkarte</button>
         </div>
     </div>
 

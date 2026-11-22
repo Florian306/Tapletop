@@ -51,6 +51,7 @@
         modalMove: document.getElementById('modal-move'),
         modalCards: document.getElementById('modal-cards'),
         modalTech: document.getElementById('modal-tech'),
+        modalProvince: document.getElementById('modal-province'),
         modalInfo: document.getElementById('modal-info')
     };
 
@@ -265,6 +266,8 @@
         dom.cardCount.textContent = state.players[0]?.cards.length || 0;
         const goldEl = document.getElementById('gold-count');
         if (goldEl) goldEl.textContent = state.players[0]?.gold || 0;
+        const btnProv = document.getElementById('btn-open-province');
+        if (btnProv) btnProv.classList.toggle('hidden', !(humanTurn && state.selectedId && state.board[state.selectedId]?.ownerId === 0));
 
         dom.reinforceBadge.classList.toggle('hidden', !(humanTurn && state.phase === 'reinforce' && state.reinforcements > 0));
         dom.reinforceBadge.textContent = `+${state.reinforcements} Truppen verfügbar`;
@@ -420,7 +423,9 @@
         const atkDice = Array.from({ length: atkCount }, () => 1 + Math.floor(Math.random() * 6)).sort((a, b) => b - a);
         const defDice = Array.from({ length: defCount }, () => 1 + Math.floor(Math.random() * 6)).sort((a, b) => b - a);
         if (atkPlayer?.techs?.includes('artillery') && atkDice.length) atkDice[0] = Math.min(6, atkDice[0] + 1);
-        if ((dCell.isCapital || defPlayer?.techs?.includes('fortress')) && defDice.length) defDice[0] = Math.min(6, defDice[0] + 1);
+        if ((dCell.isCapital || defPlayer?.techs?.includes('fortress') || (dCell.cities || []).some(c => c.wall)) && defDice.length) {
+            defDice[0] = Math.min(6, defDice[0] + 1);
+        }
 
         let aLoss = 0, dLoss = 0;
         for (let i = 0; i < Math.min(atkDice.length, defDice.length); i++) {
@@ -528,6 +533,12 @@
         const nextP = state.players[state.currentPlayer];
         const terrIncome = Object.values(state.board).filter(b => b.ownerId === nextP.id).length * 8;
         nextP.gold = (nextP.gold || 0) + terrIncome;
+        Object.values(state.board).filter(b => b.ownerId === nextP.id).forEach(b => {
+            (b.cities || []).forEach(c => {
+                if (c.market) nextP.gold += 15;
+                if (c.forge) nextP.gold += 10;
+            });
+        });
         state.reinforcements = calcReinforcements(state.currentPlayer);
         saveGame();
         renderAll();
@@ -715,6 +726,113 @@
     document.getElementById('btn-tech').addEventListener('click', () => {
         renderTechModal();
         dom.modalTech.classList.remove('hidden');
+    });
+
+    // Tactical Province & Cities View
+    let activeProvinceId = null;
+
+    function ensureCities(terrId) {
+        const cell = state.board[terrId];
+        if (!cell.cities) {
+            const names = TERRITORY_CITIES[terrId] || ['Hauptstadt', 'Hafenstadt', 'Grenzfestung'];
+            const total = cell.troops;
+            const c0 = Math.max(1, Math.ceil(total / 2));
+            const rem = Math.max(0, total - c0);
+            const c1 = Math.floor(rem / 2);
+            const c2 = rem - c1;
+            cell.cities = [
+                { name: names[0], role: '🏰', troops: c0, wall: false, market: false, forge: false, x: 90, y: 78 },
+                { name: names[1], role: '⚓', troops: c1, wall: false, market: false, forge: false, x: 240, y: 50 },
+                { name: names[2], role: '⚔️', troops: c2, wall: false, market: false, forge: false, x: 390, y: 85 }
+            ];
+        } else {
+            // Sync city troop sum with territory troops
+            const sum = cell.cities.reduce((s, c) => s + c.troops, 0);
+            if (sum !== cell.troops) cell.cities[0].troops = Math.max(0, cell.cities[0].troops + (cell.troops - sum));
+        }
+        return cell.cities;
+    }
+
+    function openProvinceModal(terrId) {
+        activeProvinceId = terrId;
+        renderProvinceModal();
+        dom.modalProvince.classList.remove('hidden');
+    }
+
+    function renderProvinceModal() {
+        if (!activeProvinceId) return;
+        const t = getTerr(activeProvinceId);
+        const cities = ensureCities(activeProvinceId);
+        const me = state.players[0];
+
+        document.getElementById('prov-title').textContent = `🏰 ${t.name} — Städte & Garnisonen`;
+        const nodes = document.getElementById('prov-nodes');
+        nodes.innerHTML = cities.map(c => `
+            <g>
+                <circle cx="${c.x}" cy="${c.y}" r="22" fill="#132a3a" stroke="${c.wall ? '#facc15' : '#22c55e'}" stroke-width="2.5"/>
+                <text x="${c.x}" y="${c.y - 2}" text-anchor="middle" font-size="13" fill="#fff" font-weight="900">${c.troops}</text>
+                <text x="${c.x}" y="${c.y + 12}" text-anchor="middle" font-size="9" fill="#93c5fd">${c.role}</text>
+                <text x="${c.x}" y="${c.y + 36}" text-anchor="middle" font-size="11" fill="#fef9c3" font-weight="700">${c.name}</text>
+            </g>
+        `).join('');
+
+        const list = document.getElementById('prov-cities-list');
+        list.innerHTML = '';
+        cities.forEach((c, idx) => {
+            const row = document.createElement('div');
+            row.className = 'tech-item';
+            const badges = `${c.wall ? ' 🛡️' : ''}${c.market ? ' 🏪' : ''}${c.forge ? ' 🏭' : ''}`;
+            row.innerHTML = `
+                <div>
+                    <strong>${c.role} ${c.name}${badges}</strong>
+                    <small>Garnison: ${c.troops} Truppen</small>
+                </div>
+                <div class="city-controls">
+                    <button class="mini-act-btn" data-shift="${idx}" title="1 Truppe zur nächsten Stadt verlegen" ${c.troops <= 0 ? 'disabled' : ''}>→ Verlegen</button>
+                    <button class="mini-act-btn" data-wall="${idx}" ${c.wall || me.gold < 50 ? 'disabled' : ''}>🛡️ 50🪙</button>
+                    <button class="mini-act-btn" data-market="${idx}" ${c.market || me.gold < 60 ? 'disabled' : ''}>🏪 60🪙</button>
+                    <button class="mini-act-btn" data-forge="${idx}" ${c.forge || me.gold < 60 ? 'disabled' : ''}>🏭 60🪙</button>
+                </div>
+            `;
+            row.querySelector('[data-shift]').addEventListener('click', () => {
+                if (c.troops <= 0) return;
+                c.troops -= 1;
+                cities[(idx + 1) % cities.length].troops += 1;
+                RiskSound.deploy();
+                saveGame();
+                renderProvinceModal();
+            });
+            row.querySelector('[data-wall]').addEventListener('click', () => {
+                if (c.wall || me.gold < 50) return;
+                me.gold -= 50; c.wall = true;
+                RiskSound.conquer(); log(`🛡️ Festungsmauer in ${c.name} errichtet!`);
+                saveGame(); renderProvinceModal(); renderAll();
+            });
+            row.querySelector('[data-market]').addEventListener('click', () => {
+                if (c.market || me.gold < 60) return;
+                me.gold -= 60; c.market = true;
+                RiskSound.conquer(); log(`🏪 Marktplatz in ${c.name} eröffnet (+15 🪙/Runde)!`);
+                saveGame(); renderProvinceModal(); renderAll();
+            });
+            row.querySelector('[data-forge]').addEventListener('click', () => {
+                if (c.forge || me.gold < 60) return;
+                me.gold -= 60; c.forge = true;
+                RiskSound.conquer(); log(`🏭 Eisenschmiede in ${c.name} gebaut (+10 ⚙️/Runde)!`);
+                saveGame(); renderProvinceModal(); renderAll();
+            });
+            list.appendChild(row);
+        });
+    }
+
+    document.getElementById('btn-open-province').addEventListener('click', () => {
+        if (state.selectedId && state.board[state.selectedId]?.ownerId === 0) {
+            openProvinceModal(state.selectedId);
+        }
+    });
+
+    document.getElementById('btn-prov-close').addEventListener('click', () => {
+        dom.modalProvince.classList.add('hidden');
+        activeProvinceId = null;
     });
 
     document.getElementById('btn-tech-close').addEventListener('click', () => dom.modalTech.classList.add('hidden'));

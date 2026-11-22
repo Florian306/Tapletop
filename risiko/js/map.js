@@ -73,6 +73,38 @@ function ownsCont(state, pid, contId) {
     return RISK_TERRITORIES.filter(t => t.cont === contId).every(t => state.board[t.id]?.ownerId === pid);
 }
 
+// 3 authentic historical cities per territory
+const TERRITORY_CITIES = {
+    alaska: ['Anchorage', 'Juneau', 'Fairbanks'],
+    canada: ['Ottawa', 'Toronto', 'Montreal'],
+    groenland: ['Nuuk', 'Ilulissat', 'Qaqortoq'],
+    usa_west: ['San Francisco', 'Los Angeles', 'Denver'],
+    usa_ost: ['New York', 'Washington', 'Boston'],
+    mexiko: ['Mexiko-Stadt', 'Veracruz', 'Guadalajara'],
+    kolumbien: ['Bogotá', 'Cartagena', 'Caracas'],
+    brasilien: ['Rio de Janeiro', 'São Paulo', 'Salvador'],
+    peru: ['Lima', 'Cusco', 'Quito'],
+    argentinien: ['Buenos Aires', 'Córdoba', 'Santiago'],
+    nord_eu: ['Stockholm', 'Kopenhagen', 'Oslo'],
+    west_eu: ['Paris', 'London', 'Madrid'],
+    mitteleuropa: ['Berlin', 'Hamburg', 'München'],
+    sued_eu: ['Rom', 'Venedig', 'Athen'],
+    russland: ['Moskau', 'St. Petersburg', 'Kiew'],
+    westafrika: ['Timbuktu', 'Lagos', 'Dakar'],
+    aegypten: ['Kairo', 'Alexandria', 'Tripolis'],
+    ostafrika: ['Addis Abeba', 'Sansibar', 'Nairobi'],
+    suedafrika: ['Kapstadt', 'Johannesburg', 'Durban'],
+    ural: ['Jekaterinburg', 'Kasan', 'Perm'],
+    sibirien: ['Irkutsk', 'Omsk', 'Tomsk'],
+    kamtschatka: ['Wladiwostok', 'Ochotsk', 'Petropawlowsk'],
+    nahost: ['Konstantinopel', 'Bagdad', 'Damaskus'],
+    indien: ['Delhi', 'Bombay', 'Kalkutta'],
+    china: ['Peking', 'Shanghai', 'Kanton'],
+    japan: ['Edo (Tokio)', 'Kyoto', 'Osaka'],
+    indonesien: ['Batavia', 'Singapur', 'Manila'],
+    australien: ['Sydney', 'Melbourne', 'Perth']
+};
+
 // Loaded Natural Earth GeoJSON features grouped by territory id
 window.RISK_GEO = { loaded: false, byTerritory: {} };
 
