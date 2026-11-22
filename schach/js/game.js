@@ -17,6 +17,8 @@
     let captured = { w: [], b: [] };
     let gameOver = false;
     let themeIdx = 0;
+    let hintMove = null;
+    let analysis = { best: 0, good: 0, inaccuracy: 0, blunder: 0, castled: false, notes: [] };
 
     const dom = {
         board: document.getElementById('chess-board'),
@@ -58,6 +60,8 @@
         lastMove = null;
         captured = { w: [], b: [] };
         gameOver = false;
+        hintMove = null;
+        analysis = { best: 0, good: 0, inaccuracy: 0, blunder: 0, castled: false, notes: [] };
         render();
     }
 
@@ -228,7 +232,61 @@
         }
     }
 
+    function findBestWhiteMove(b) {
+        const moves = getAllLegalMoves(b, 'w');
+        if (!moves.length) return { move: null, evalScore: 0 };
+        let bestM = moves[0];
+        let bestEval = Infinity; // White minimizes evaluateBoard (which is + for Black)
+        for (const m of moves) {
+            const ev = minimax(applyMoveOn(b, m), 1, -Infinity, Infinity, true);
+            if (ev < bestEval) { bestEval = ev; bestM = m; }
+        }
+        return { move: bestM, evalScore: bestEval };
+    }
+
+    function openAnalysisModal() {
+        const total = analysis.best + analysis.good + analysis.inaccuracy + analysis.blunder;
+        const acc = total > 0
+            ? Math.round(((analysis.best * 100 + analysis.good * 82 + analysis.inaccuracy * 55 + analysis.blunder * 15) / total))
+            : 100;
+
+        document.getElementById('rev-accuracy').textContent = `${acc}%`;
+        document.getElementById('rev-stats').innerHTML = `
+            <div class="review-stat">⭐ Beste Züge: <strong>${analysis.best}</strong></div>
+            <div class="review-stat">✅ Gute Züge: <strong>${analysis.good}</strong></div>
+            <div class="review-stat">⚠️ Ungenau: <strong>${analysis.inaccuracy}</strong></div>
+            <div class="review-stat">❌ Patzer: <strong>${analysis.blunder}</strong></div>
+        `;
+
+        const tips = [];
+        if (analysis.blunder > 0) tips.push(`• Du hattest ${analysis.blunder} Patzer — prüfe vor jedem Zug kurz, ob das Zielfeld von einer gegnerischen Figur gedeckt ist.`);
+        if (!analysis.castled && total >= 6) tips.push('• Tipp: Nutze die Rochade (König 2 Felder Richtung Turm), um deinen König früh in Sicherheit zu bringen.');
+        if (analysis.inaccuracy >= 2) tips.push('• Achte auf die 4 Zentrumsfelder (d4, d5, e4, e5) — Figuren im Zentrum kontrollieren mehr Felder.');
+        if (acc >= 85 && total >= 4) tips.push('• Starke Leistung! Deine Zug-Genauigkeit liegt auf Turnier-Niveau.');
+        if (!tips.length) tips.push('• Spiele ein paar Züge, dann erstellt die Engine persönliche Tipps für dich!');
+
+        document.getElementById('rev-tips').innerHTML = tips.map(t => `<div>${t}</div>`).join('');
+        document.getElementById('modal-review').classList.remove('hidden');
+    }
+
     function executeMove(m) {
+        let ratingTag = '';
+        if (turn === 'w') {
+            if (m.castle) analysis.castled = true;
+            const best = findBestWhiteMove(board);
+            const playedEval = minimax(applyMoveOn(board, m), 1, -Infinity, Infinity, true);
+            const loss = playedEval - best.evalScore; // higher = worse for white
+            if (loss <= 35) { analysis.best++; ratingTag = ' ⭐'; }
+            else if (loss <= 100) { analysis.good++; ratingTag = ' ✅'; }
+            else if (loss <= 200) { analysis.inaccuracy++; ratingTag = ' ⚠️'; }
+            else {
+                analysis.blunder++;
+                const bTxt = best.move ? ` (Besser: ${FILES[best.move.fc]}${8 - best.move.fr}→${FILES[best.move.tc]}${8 - best.move.tr})` : '';
+                ratingTag = ` ❌${bTxt}`;
+            }
+        }
+
+        hintMove = null;
         history.push({ board: cloneBoard(board), turn, lastMove, captured: { w: [...captured.w], b: [...captured.b] } });
         const target = board[m.tr][m.tc];
         const mover = board[m.fr][m.fc];
@@ -236,7 +294,7 @@
 
         board = applyMoveOn(board, m);
         lastMove = m;
-        const note = `${GLYPHS[mover.color + mover.type]} ${FILES[m.fc]}${8 - m.fr}→${FILES[m.tc]}${8 - m.tr}`;
+        const note = `${GLYPHS[mover.color + mover.type]} ${FILES[m.fc]}${8 - m.fr}→${FILES[m.tc]}${8 - m.tr}${ratingTag}`;
         const div = document.createElement('div');
         div.textContent = note;
         dom.history.appendChild(div);
@@ -254,6 +312,7 @@
             dom.status.textContent = check
                 ? (turn === 'b' ? '🏆 SCHACHMATT! Du gewinnst!' : '💀 SCHACHMATT! KI gewinnt!')
                 : '🤝 PATT — Unentschieden!';
+            setTimeout(openAnalysisModal, 700);
         }
         render();
 
@@ -312,6 +371,7 @@
                 const sq = document.createElement('div');
                 sq.className = `sq ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
                 if (selected && selected.r === r && selected.c === c) sq.classList.add('selected');
+                if (hintMove && ((hintMove.fr === r && hintMove.fc === c) || (hintMove.tr === r && hintMove.tc === c))) sq.classList.add('hint-best');
                 if (lastMove && ((lastMove.fr === r && lastMove.fc === c) || (lastMove.tr === r && lastMove.tc === c))) sq.classList.add('last-move');
 
                 const p = board[r][c];
@@ -336,6 +396,14 @@
         dom.capBlack.textContent = captured.b.join(' ');
     }
 
+    document.getElementById('btn-hint').addEventListener('click', () => {
+        if (gameOver || turn !== 'w') return;
+        const best = findBestWhiteMove(board);
+        hintMove = best.move;
+        render();
+    });
+    document.getElementById('btn-analysis').addEventListener('click', openAnalysisModal);
+    document.getElementById('btn-rev-close').addEventListener('click', () => document.getElementById('modal-review').classList.add('hidden'));
     document.getElementById('btn-new').addEventListener('click', () => { dom.history.innerHTML = ''; initGame(); });
     document.getElementById('btn-theme').addEventListener('click', () => {
         themeIdx = (themeIdx + 1) % THEMES.length;

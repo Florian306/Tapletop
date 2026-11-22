@@ -20,6 +20,8 @@
                     <option value="2" selected>KI: Mittel</option>
                     <option value="3">KI: Meister</option>
                 </select>
+                <button id="btn-hint" class="hud-btn" title="Besten Zug anzeigen">💡 Tipp</button>
+                <button id="btn-analysis" class="hud-btn" title="Partie-Analyse & Tipps">📊 Analyse</button>
                 <button id="btn-theme" class="hud-btn" title="Brett-Stil wechseln">🎨 Brett</button>
                 <button id="btn-undo" class="hud-btn" title="Letzten Zug zurücknehmen">↩ Zurück</button>
                 <button id="btn-new" class="hud-btn">Neues Spiel</button>
@@ -38,11 +40,25 @@
                     <div class="captured-row"><span>Weiß:</span><div id="cap-white" class="cap-pieces"></div></div>
                 </div>
                 <div class="panel log-panel">
-                    <h3>Zug-Protokoll</h3>
+                    <h3>Zug-Protokoll &amp; Bewertung</h3>
                     <div id="move-history" class="move-history"></div>
                 </div>
             </aside>
         </main>
+    </div>
+
+    <!-- Chess Game Review & Tips Modal -->
+    <div class="modal-backdrop hidden" id="modal-review">
+        <div class="modal-card">
+            <h2>📊 Partie-Analyse &amp; Tipps</h2>
+            <div class="accuracy-box">
+                <small>DEINE GENAUIGKEIT</small>
+                <strong id="rev-accuracy">—%</strong>
+            </div>
+            <div class="review-stats" id="rev-stats"></div>
+            <div class="review-tips" id="rev-tips"></div>
+            <button id="btn-rev-close" class="cta-btn">Schließen</button>
+        </div>
     </div>
 
     <script src="js/game.js"></script>
