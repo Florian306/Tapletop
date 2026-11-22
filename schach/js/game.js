@@ -23,49 +23,64 @@
 
     const LESSONS = [
         {
-            title: '1. Grundreihenmatt (Matt in 1)',
-            desc: 'Der schwarze König ist hinter seinen eigenen Bauern eingesperrt. Setze ihn mit deinem Turm auf der 8. Reihe matt!',
-            setup: [
-                [0, 6, 'b', 'K'], [1, 5, 'b', 'P'], [1, 6, 'b', 'P'], [1, 7, 'b', 'P'],
-                [7, 4, 'w', 'K'], [7, 0, 'w', 'R']
-            ],
+            title: '1. Der Bauer (♙) — Grundlagen',
+            desc: 'Bauern ziehen nur geradeaus (1 Feld, oder vom Startfeld aus 2 Felder). Ziehe den weißen Bauern von e2 zwei Felder vor auf e4!',
+            setup: [[0, 4, 'b', 'K'], [7, 4, 'w', 'K'], [6, 4, 'w', 'P']],
+            solution: { fr: 6, fc: 4, tr: 4, tc: 4 }
+        },
+        {
+            title: '2. Der Turm (♖) — Gerade Linien',
+            desc: 'Der Turm zieht beliebig weit geradeaus (hoch, runter, links, rechts). Schlage den schwarzen Bauern auf a2 mit deinem Turm auf a8!',
+            setup: [[0, 7, 'b', 'K'], [6, 0, 'b', 'P'], [7, 7, 'w', 'K'], [0, 0, 'w', 'R']],
+            solution: { fr: 0, fc: 0, tr: 6, tc: 0 }
+        },
+        {
+            title: '3. Der Läufer (♗) — Diagonal',
+            desc: 'Der Läufer bewegt sich beliebig weit diagonal über Felder einer Farbe. Schlage den schwarzen Bauern auf f5 mit deinem Läufer auf c2!',
+            setup: [[0, 0, 'b', 'K'], [3, 5, 'b', 'P'], [7, 7, 'w', 'K'], [6, 2, 'w', 'B']],
+            solution: { fr: 6, fc: 2, tr: 3, tc: 5 }
+        },
+        {
+            title: '4. Die Dame (♕) — Stärkste Figur',
+            desc: 'Die Dame kann wie Turm UND Läufer ziehen (gerade & diagonal). Schlage den ungedeckten schwarzen Turm auf d5!',
+            setup: [[0, 7, 'b', 'K'], [3, 3, 'b', 'R'], [7, 7, 'w', 'K'], [6, 3, 'w', 'Q']],
+            solution: { fr: 6, fc: 3, tr: 3, tc: 3 }
+        },
+        {
+            title: '5. Der Springer (♘) — Der L-Sprung',
+            desc: 'Der Springer zieht im „L“ (2 Felder gerade + 1 zur Seite) und kann als EINZIGE Figur über andere springen! Schlage den schwarzen Bauern auf c6.',
+            setup: [[0, 7, 'b', 'K'], [2, 2, 'b', 'P'], [7, 7, 'w', 'K'], [4, 3, 'w', 'N'], [3, 3, 'w', 'P'], [3, 2, 'w', 'P']],
+            solution: { fr: 4, fc: 3, tr: 2, tc: 2 }
+        },
+        {
+            title: '6. Der König (♔) — Aus dem Schach',
+            desc: 'Der König zieht 1 Feld in jede Richtung und darf niemals im Schach stehen bleiben. Dein König wird vom Turm bedroht — ziehe ihn auf f1 in Sicherheit!',
+            setup: [[0, 0, 'b', 'K'], [0, 4, 'b', 'R'], [7, 4, 'w', 'K']],
+            solution: { fr: 7, fc: 4, tr: 7, tc: 5 }
+        },
+        {
+            title: '7. Schachmatt — Grundreihenmatt',
+            desc: 'Schachmatt heißt: Der König steht im Schach und kann nicht mehr entkommen. Ziehe deinen Turm auf a8 für dein erstes Schachmatt!',
+            setup: [[0, 6, 'b', 'K'], [1, 5, 'b', 'P'], [1, 6, 'b', 'P'], [1, 7, 'b', 'P'], [7, 4, 'w', 'K'], [7, 0, 'w', 'R']],
             solution: { fr: 7, fc: 0, tr: 0, tc: 0 }
         },
         {
-            title: '2. Die Springer-Gabel',
-            desc: 'Springe mit deinem Springer auf c7, um den schwarzen König UND den Turm auf a8 gleichzeitig anzugreifen!',
-            setup: [
-                [0, 4, 'b', 'K'], [0, 0, 'b', 'R'],
-                [7, 4, 'w', 'K'], [3, 3, 'w', 'N']
-            ],
+            title: '8. Die Rochade — Königsschutz',
+            desc: 'Bei der kurzen Rochade zieht der König 2 Felder nach rechts (e1→g1) und der Turm springt über ihn. Führe sie jetzt aus!',
+            setup: [[0, 4, 'b', 'K'], [7, 4, 'w', 'K'], [7, 7, 'w', 'R'], [6, 5, 'w', 'P'], [6, 6, 'w', 'P'], [6, 7, 'w', 'P']],
+            solution: { fr: 7, fc: 4, tr: 7, tc: 6 }
+        },
+        {
+            title: '9. Taktik — Die Springer-Gabel',
+            desc: 'Mit einer Gabel greifst du 2 Figuren gleichzeitig an. Springe mit dem Springer auf c7, um König UND Turm zu bedrohen!',
+            setup: [[0, 4, 'b', 'K'], [0, 0, 'b', 'R'], [7, 4, 'w', 'K'], [3, 3, 'w', 'N']],
             solution: { fr: 3, fc: 3, tr: 1, tc: 2 }
         },
         {
-            title: '3. Das Schäfermatt (Matt in 1)',
-            desc: 'Dein Läufer auf c4 deckt das Feld f7. Schlage mit der Dame auf f7 für ein sofortiges Schachmatt!',
-            setup: [
-                [0, 4, 'b', 'K'], [1, 4, 'b', 'P'], [1, 5, 'b', 'P'], [1, 3, 'b', 'P'], [0, 3, 'b', 'Q'], [0, 5, 'b', 'B'],
-                [7, 4, 'w', 'K'], [4, 2, 'w', 'B'], [3, 7, 'w', 'Q']
-            ],
+            title: '10. Finale — Das Schäfermatt',
+            desc: 'Dein Läufer auf c4 deckt das Feld f7. Schlage mit der Dame auf f7 — der König kann die Dame nicht schlagen. Schachmatt!',
+            setup: [[0, 4, 'b', 'K'], [1, 4, 'b', 'P'], [1, 5, 'b', 'P'], [1, 3, 'b', 'P'], [0, 3, 'b', 'Q'], [0, 5, 'b', 'B'], [7, 4, 'w', 'K'], [4, 2, 'w', 'B'], [3, 7, 'w', 'Q']],
             solution: { fr: 3, fc: 7, tr: 1, tc: 5 }
-        },
-        {
-            title: '4. Ungedeckte Dame schlagen',
-            desc: 'Die schwarze Dame auf d5 steht komplett ungedeckt. Schlage sie mit deinem Läufer!',
-            setup: [
-                [0, 4, 'b', 'K'], [3, 3, 'b', 'Q'],
-                [7, 4, 'w', 'K'], [6, 6, 'w', 'B']
-            ],
-            solution: { fr: 6, fc: 6, tr: 3, tc: 3 }
-        },
-        {
-            title: '5. Kurze Rochade (Königssicherheit)',
-            desc: 'Bewege deinen König von e1 zwei Felder nach rechts auf g1, um die kurze Rochade auszuführen!',
-            setup: [
-                [0, 4, 'b', 'K'],
-                [7, 4, 'w', 'K'], [7, 7, 'w', 'R'], [6, 5, 'w', 'P'], [6, 6, 'w', 'P'], [6, 7, 'w', 'P']
-            ],
-            solution: { fr: 7, fc: 4, tr: 7, tc: 6 }
         }
     ];
 
@@ -353,13 +368,20 @@
                 gameOver = true;
                 render();
                 dom.status.textContent = '🎉 RICHTIG GELÖST! Stark gemacht!';
-                const nextDiv = document.createElement('div');
-                nextDiv.style.color = '#4ade80';
-                nextDiv.style.fontWeight = '800';
-                nextDiv.textContent = solvedIdx + 1 < LESSONS.length
-                    ? '✅ Perfekt! Öffne „🎓 Lektionen“ für die nächste Übung.'
-                    : '🏆 Alle 5 Lektionen gemeistert!';
-                dom.history.appendChild(nextDiv);
+                if (solvedIdx + 1 < LESSONS.length) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'cta-btn';
+                    nextBtn.style.marginTop = '8px';
+                    nextBtn.textContent = `Nächste Lektion (${solvedIdx + 2}/${LESSONS.length}) →`;
+                    nextBtn.addEventListener('click', () => startLesson(solvedIdx + 1));
+                    dom.history.appendChild(nextBtn);
+                } else {
+                    const done = document.createElement('div');
+                    done.style.color = '#4ade80';
+                    done.style.fontWeight = '800';
+                    done.textContent = '🏆 Glückwunsch! Du hast alle 10 Lektionen gemeistert!';
+                    dom.history.appendChild(done);
+                }
             } else {
                 dom.status.textContent = '❌ Nicht ganz — probier es nochmal! (Tipp-Button hilft)';
                 selected = null;
