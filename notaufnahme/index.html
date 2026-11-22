@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNA — Notaufnahme Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="hud">
+            <div class="hud-left">
+                <a href="../index.html" class="hud-btn">← Hub</a>
+                <div class="brand">🏥 ZNA SIMULATOR</div>
+                <div class="stat-pill">✅ Gerettet: <strong id="stat-saved">0</strong></div>
+                <div class="stat-pill">💔 Verloren: <strong id="stat-lost">0</strong></div>
+                <div class="stat-pill">⭐ Punkte: <strong id="stat-score">0</strong></div>
+            </div>
+            <div class="hud-right">
+                <button id="btn-sound" class="hud-btn" title="Monitor-Ton an/aus">🔊</button>
+                <button id="btn-new" class="hud-btn">Neue Schicht</button>
+            </div>
+        </header>
+
+        <main class="layout">
+            <!-- Left: Triage Waiting Queue -->
+            <aside class="queue-panel">
+                <div class="panel-head">
+                    <h3>🚑 Triage / Aufnahme</h3>
+                    <span id="queue-count" class="badge">0</span>
+                </div>
+                <div id="patient-queue" class="patient-queue"></div>
+            </aside>
+
+            <!-- Center: Active Treatment Bay + Live ECG Monitor -->
+            <section class="bay-panel">
+                <!-- Live Vital Signs Monitor -->
+                <div class="monitor-box">
+                    <div class="monitor-top">
+                        <span id="mon-patient">Kein Patient im Schockraum</span>
+                        <span id="mon-triage" class="triage-tag">—</span>
+                    </div>
+                    <div class="monitor-grid">
+                        <canvas id="ecg-canvas" width="520" height="110" class="ecg-canvas"></canvas>
+                        <div class="vitals-col">
+                            <div class="vital v-hr"><small>HF (bpm)</small><strong id="v-hr">—</strong></div>
+                            <div class="vital v-spo2"><small>SpO₂ (%)</small><strong id="v-spo2">—</strong></div>
+                            <div class="vital v-bp"><small>RR (mmHg)</small><strong id="v-bp">—</strong></div>
+                            <div class="vital v-temp"><small>TEMP (°C)</small><strong id="v-temp">—</strong></div>
+                        </div>
+                    </div>
+                    <div class="stability-wrap">
+                        <small>Stabilität</small>
+                        <div class="stab-bar"><div id="stab-fill" class="stab-fill" style="width:0%"></div></div>
+                    </div>
+                </div>
+
+                <!-- Patient Findings & Actions -->
+                <div class="work-grid">
+                    <div class="card">
+                        <h3>📋 Befunde &amp; Symptome</h3>
+                        <div id="findings-list" class="findings-list">
+                            <span class="muted">Wähle links einen Patienten aus der Triage aus.</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>🔬 Diagnostik</h3>
+                        <div class="action-grid" id="diag-grid">
+                            <button class="act-btn" data-diag="anamnesis">🩺 Anamnese</button>
+                            <button class="act-btn" data-diag="lab">🩸 Blutbild</button>
+                            <button class="act-btn" data-diag="xray">🩻 Röntgen / CT</button>
+                            <button class="act-btn" data-diag="ecg">💓 12-Kanal-EKG</button>
+                        </div>
+
+                        <h3 style="margin-top:12px;">💊 Behandlung</h3>
+                        <div class="action-grid" id="treat-grid">
+                            <button class="act-btn treat" data-treat="oxygen">🫁 Sauerstoff</button>
+                            <button class="act-btn treat" data-treat="meds">💉 Medikament</button>
+                            <button class="act-btn treat" data-treat="iv">💧 Infusion</button>
+                            <button class="act-btn treat" data-treat="bandage">🩹 Wundversorgung</button>
+                            <button class="act-btn treat" data-treat="splint">🦴 Schiene / Gips</button>
+                            <button class="act-btn treat danger" data-treat="defib">⚡ Defibrillator</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-bar" id="er-log">Schicht gestartet — wähle den dringendsten Patienten aus!</div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>

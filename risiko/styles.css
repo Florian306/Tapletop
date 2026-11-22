@@ -65,7 +65,10 @@ body {
     border: 1px solid rgba(254, 240, 138, 0.5);
 }
 
-.brand span { opacity: 0.85; font-size: 0.8rem; }
+.brand span {
+    opacity: 0.85;
+    font-size: 0.8rem;
+}
 
 .meta-chip {
     font-size: 0.8rem;
@@ -76,10 +79,25 @@ body {
     background: rgba(255, 255, 255, 0.06);
 }
 
-.gold-chip strong { color: #fde047; }
-.turn-name { font-weight: 800; font-size: 0.88rem; color: #fff; }
-.phase-name { font-weight: 700; font-size: 0.84rem; color: #fde047; }
-.hud-divider { color: rgba(255, 255, 255, 0.3); }
+.gold-chip strong {
+    color: #fde047;
+}
+
+.turn-name {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #fff;
+}
+
+.phase-name {
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: #fde047;
+}
+
+.hud-divider {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .icon-btn {
     text-decoration: none;
@@ -94,7 +112,10 @@ body {
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.icon-btn:hover { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
 
 .sidebar-tabs {
     display: grid;
@@ -116,9 +137,23 @@ body {
     cursor: pointer;
 }
 
-.tab-btn.active { background: #2563eb; color: #fff; }
-.tab-panel { display: none; flex: 1; min-height: 0; overflow-y: auto; }
-.tab-panel.active { display: flex; flex-direction: column; gap: 6px; }
+.tab-btn.active {
+    background: #2563eb;
+    color: #fff;
+}
+
+.tab-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.tab-panel.active {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 
 .layout {
     flex: 1;
